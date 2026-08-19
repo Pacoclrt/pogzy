@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pogzy — Grades Minecraft sur mesure</title>
+<meta name="description" content="Pogzy crée des grades et ranks Minecraft personnalisés, faits main : style Simple ou Complexe avec jeu de lumière, option dégradé. Livraison .PNG HD.">
+<meta name="theme-color" content="#05070f">
+<link rel="icon" href="pogzy.png">
+<meta property="og:title" content="Pogzy — Grades Minecraft sur mesure">
+<meta property="og:description" content="Des grades et ranks personnalisés qui démarquent votre serveur Minecraft.">
+<meta property="og:image" content="pogzy.png">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Chakra+Petch:wght@300;400;500;600;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   POGZY — Grades Minecraft sur mesure
+   Nuit & Or · Russo One / Chakra Petch / Silkscreen
+   Fond : champ de particules interactif (Canvas 2D, sans dépendance)
+   ============================================================ */
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --ink-0:#05070f; --ink-1:#0a1324; --ink-2:#0f1d38;
+  --surface:rgba(255,255,255,.045); --surface-2:rgba(255,255,255,.075);
+  --line:rgba(255,255,255,.10); --line-2:rgba(255,255,255,.17);
+  --gold:#ffce5a; --gold-2:#ffb52e; --gold-deep:#e6a100; --gold-soft:rgba(255,206,90,.13);
+  --ice:#8fb8ff; --ice-deep:#4d74bd;
+  --text:#eaf1ff; --muted:#9db0d0; --faint:#64789c;
+  --danger:#ff7d7d; --ok:#5fd39b; --discord:#5865f2;
+  --f-display:'Russo One',system-ui,sans-serif;
+  --f-body:'Chakra Petch',system-ui,sans-serif;
+  --f-pixel:'Silkscreen',monospace;
+  --r-sm:10px; --r-md:16px; --r-lg:22px; --r-xl:30px; --r-pill:999px;
+  --ease-out:cubic-bezier(.16,1,.3,1); --ease-spring:cubic-bezier(.34,1.4,.5,1);
+  --t-fast:.18s; --t-med:.32s; --t-slow:.55s;
+  --wrap:1180px;
+  --shadow-card:0 24px 60px -24px rgba(0,0,0,.7);
+  --shadow-gold:0 20px 60px -18px rgba(255,181,46,.45);
+}
+
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+body{font-family:var(--f-body);color:var(--text);background:var(--ink-0);line-height:1.7;font-weight:400;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;position:relative}
+body::before{content:"";position:fixed;inset:0;z-index:-3;pointer-events:none;
+  background:
+    radial-gradient(1100px 700px at 78% -8%, rgba(255,181,46,.10), transparent 60%),
+    radial-gradient(900px 700px at 10% 12%, rgba(77,116,189,.14), transparent 62%),
+    linear-gradient(180deg,#070b17 0%, #05070f 45%, #05070f 100%)}
+body::after{content:"";position:fixed;inset:0;z-index:-3;pointer-events:none;opacity:.4;
+  background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.016) 1px,transparent 1px);background-size:52px 52px;
+  mask-image:radial-gradient(circle at 50% 30%, #000 30%, transparent 85%)}
+#bgfx{position:fixed;inset:0;width:100vw;height:100vh;z-index:-2;pointer-events:none;transition:opacity .4s var(--ease-out)}
+
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+::selection{background:var(--gold);color:#1a1204}
+::-webkit-scrollbar{width:11px}
+::-webkit-scrollbar-track{background:var(--ink-0)}
+::-webkit-scrollbar-thumb{background:#1c2b48;border-radius:99px;border:2px solid var(--ink-0)}
+::-webkit-scrollbar-thumb:hover{background:#284066}
+
+.wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:24px}
+.section{padding:clamp(72px,11vw,132px) 0;position:relative}
+.section-head{max-width:720px;margin-bottom:clamp(38px,6vw,62px)}
+.section-head.center{margin-inline:auto;text-align:center}
+
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-family:var(--f-pixel);font-size:11px;
+  letter-spacing:1px;color:var(--gold);text-transform:uppercase;padding:7px 14px;border-radius:var(--r-pill);
+  background:var(--gold-soft);border:1px solid rgba(255,206,90,.28);margin-bottom:20px}
+.eyebrow .ic{width:14px;height:14px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;line-height:1.05;letter-spacing:.4px}
+.h1{font-size:clamp(38px,6.6vw,74px)}
+.h2{font-size:clamp(30px,4.6vw,52px)}
+.h3{font-size:clamp(19px,2.4vw,23px)}
+.acc{background:linear-gradient(96deg,var(--gold) 10%,var(--gold-2) 55%,var(--gold-deep));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:clamp(16px,1.6vw,19px);color:var(--muted);max-width:56ch}
+
+.btn{--bg:var(--surface-2);--bd:var(--line-2);--fg:var(--text);
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  font-family:var(--f-body);font-weight:600;font-size:15px;letter-spacing:.3px;
+  padding:14px 26px;border-radius:var(--r-pill);border:1px solid var(--bd);background:var(--bg);color:var(--fg);white-space:nowrap;
+  transition:transform var(--t-fast) var(--ease-spring),box-shadow var(--t-med),background var(--t-med),border-color var(--t-med),color var(--t-med)}
+.btn .ic{width:18px;height:18px;transition:transform var(--t-med) var(--ease-out)}
+.btn:hover{transform:translateY(-3px)}
+.btn:active{transform:translateY(-1px) scale(.99)}
+.btn-gold{--bg:linear-gradient(96deg,var(--gold),var(--gold-2));--bd:transparent;--fg:#1a1204;font-weight:700;box-shadow:var(--shadow-gold)}
+.btn-gold:hover{box-shadow:0 26px 70px -16px rgba(255,181,46,.6)}
+.btn-gold:hover .ic{transform:translateX(4px)}
+.btn-ghost{--bg:transparent}
+.btn-ghost:hover{--bg:var(--surface-2);--bd:var(--line-2)}
+.btn-discord{--bg:var(--discord);--bd:transparent;--fg:#fff;font-weight:700;box-shadow:0 18px 50px -18px rgba(88,101,242,.7)}
+.btn-discord:hover{--bg:#4a57e0}
+.btn-lg{padding:18px 40px;font-size:17px}
+
+.progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:120;
+  background:linear-gradient(90deg,var(--gold),var(--gold-2));box-shadow:0 0 12px rgba(255,181,46,.7)}
+.skip{position:fixed;left:16px;top:-60px;z-index:200;background:var(--gold);color:#1a1204;padding:10px 18px;border-radius:10px;font-weight:700;transition:top var(--t-med)}
+.skip:focus{top:16px}
+
+header.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 0;border-bottom:1px solid transparent;
+  transition:background var(--t-med),border-color var(--t-med),backdrop-filter var(--t-med),padding var(--t-med)}
+header.nav.scrolled{background:rgba(7,11,22,.72);backdrop-filter:blur(16px) saturate(1.4);border-bottom-color:var(--line);padding:10px 0}
+.nav-inner{display:flex;align-items:center;gap:20px}
+.brand{display:flex;align-items:center;gap:12px;font-family:var(--f-display);font-size:19px}
+.brand img{width:40px;height:40px;border-radius:50%;border:2px solid var(--gold);box-shadow:0 0 20px rgba(255,206,90,.4)}
+.brand .nm{background:linear-gradient(90deg,#fff,#cfe0ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav-links{display:flex;align-items:center;gap:6px;margin-left:auto}
+.nav-links a{font-size:14.5px;font-weight:500;color:var(--muted);padding:9px 15px;border-radius:var(--r-pill);transition:color var(--t-fast),background var(--t-fast)}
+.nav-links a:hover{color:var(--text);background:var(--surface)}
+.nav-tools{display:flex;align-items:center;gap:10px}
+.lang{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-pill);padding:3px;font-family:var(--f-pixel);font-size:10px}
+.lang button{background:transparent;border:0;color:var(--faint);padding:6px 11px;border-radius:var(--r-pill);letter-spacing:1px;transition:color var(--t-fast),background var(--t-fast)}
+.lang button[aria-pressed="true"]{background:var(--gold-soft);color:var(--gold)}
+.icon-btn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;
+  background:var(--surface);border:1px solid var(--line);color:var(--text);
+  transition:transform var(--t-fast),border-color var(--t-fast),color var(--t-fast),background var(--t-fast)}
+.icon-btn:hover{transform:translateY(-2px);border-color:var(--line-2)}
+.icon-btn.disc:hover{color:#fff;background:var(--discord);border-color:transparent}
+.icon-btn .ic{width:22px;height:22px}
+.nav-cta{display:inline-flex}
+.burger{display:none}
+
+.mobile-menu{position:fixed;inset:0 0 0 auto;width:min(86vw,340px);z-index:110;
+  background:linear-gradient(180deg,#0a1426,#070c18);border-left:1px solid var(--line);
+  transform:translateX(100%);transition:transform var(--t-slow) var(--ease-out);
+  padding:88px 26px 32px;display:flex;flex-direction:column;gap:6px;box-shadow:-30px 0 80px -20px rgba(0,0,0,.8)}
+.mobile-menu.open{transform:translateX(0)}
+.mobile-menu a,.mobile-menu button.mnav{font-size:19px;font-weight:600;padding:14px 12px;border-radius:12px;color:var(--muted);
+  display:flex;align-items:center;gap:12px;background:none;border:0;text-align:left;transition:color var(--t-fast),background var(--t-fast)}
+.mobile-menu a:hover,.mobile-menu button.mnav:hover{color:var(--text);background:var(--surface)}
+.mobile-menu a .ic,.mobile-menu .mnav .ic{width:19px;height:19px;color:var(--gold)}
+.mobile-menu .btn{margin-top:16px}
+.mobile-menu .btn .ic{color:inherit}
+.scrim{position:fixed;inset:0;z-index:105;background:rgba(3,6,13,.6);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity var(--t-med),visibility var(--t-med)}
+.scrim.open{opacity:1;visibility:visible}
+
+.hero{position:relative;padding-top:clamp(120px,17vw,190px);padding-bottom:clamp(60px,9vw,110px);overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(34px,5vw,68px);align-items:center}
+.hero-copy{max-width:600px}
+.hero .h1{margin:6px 0 0}
+.hero .lead{margin-top:22px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:34px}
+.hero-badges{display:flex;flex-wrap:wrap;gap:10px;margin-top:30px}
+.pill{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;color:#d7e3f8;background:var(--surface);border:1px solid var(--line);padding:9px 16px;border-radius:var(--r-pill)}
+.pill .ic{width:16px;height:16px;color:var(--gold)}
+
+.chat-wrap{position:relative}
+.chat{position:relative;z-index:1;background:linear-gradient(180deg,rgba(11,18,34,.92),rgba(7,12,24,.95));
+  border:1px solid var(--line-2);border-radius:var(--r-lg);backdrop-filter:blur(6px);
+  box-shadow:var(--shadow-card),0 0 0 1px rgba(255,206,90,.05);overflow:hidden}
+.chat-top{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.dots{display:flex;gap:7px}
+.dots i{width:11px;height:11px;border-radius:50%;display:block}
+.dots i:nth-child(1){background:#ff6b6b}.dots i:nth-child(2){background:#ffce5a}.dots i:nth-child(3){background:#5fd39b}
+.chat-title{font-family:var(--f-pixel);font-size:10px;letter-spacing:1px;color:var(--faint);margin-left:4px}
+.chat-live{margin-left:auto;display:inline-flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+.chat-live .blip{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:blip 1.8s infinite}
+@keyframes blip{0%{box-shadow:0 0 0 0 rgba(95,211,155,.55)}70%{box-shadow:0 0 0 8px rgba(95,211,155,0)}100%{box-shadow:0 0 0 0 rgba(95,211,155,0)}}
+.chat-body{padding:18px;display:flex;flex-direction:column;gap:13px;min-height:340px}
+.msg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;opacity:0;transform:translateY(14px);transition:opacity .5s var(--ease-out),transform .5s var(--ease-out)}
+.msg.show{opacity:1;transform:none}
+.msg .tag{height:26px;image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.msg .usr{font-weight:600;font-size:15px}
+.msg .usr.joueur{color:#b9c8e4}
+.msg .txt{color:var(--muted);font-size:14.5px}
+.msg .sep{color:var(--faint)}
+.chat-typing{display:flex;align-items:center;gap:8px;margin-top:2px}
+.chat-typing .d{width:6px;height:6px;border-radius:50%;background:var(--faint);animation:typing 1.2s infinite}
+.chat-typing .d:nth-child(2){animation-delay:.15s}.chat-typing .d:nth-child(3){animation-delay:.3s}
+@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+.chat-input{display:flex;align-items:center;gap:10px;padding:13px 18px;border-top:1px solid var(--line);background:rgba(255,255,255,.015);color:var(--faint);font-size:13.5px}
+.chat-input .bar{flex:1;height:34px;border-radius:8px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;padding:0 12px;font-family:var(--f-pixel);font-size:9px;letter-spacing:1px}
+.chat-input .send{width:34px;height:34px;border-radius:8px;background:var(--gold-soft);border:1px solid rgba(255,206,90,.3);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+.chat-input .send .ic{width:16px;height:16px}
+.chat-caption{text-align:center;margin-top:16px;font-family:var(--f-pixel);font-size:9.5px;letter-spacing:1px;color:var(--faint)}
+
+.strip{border-block:1px solid var(--line);background:rgba(7,12,24,.5);backdrop-filter:blur(6px);overflow:hidden}
+.marquee{display:flex;white-space:nowrap;animation:scroll 26s linear infinite}
+.marquee span{display:inline-flex;align-items:center;gap:14px;padding:18px 30px;font-family:var(--f-pixel);font-size:11px;letter-spacing:2px;color:var(--faint);text-transform:uppercase}
+.marquee span .ic{width:15px;height:15px;color:var(--gold)}
+@keyframes scroll{to{transform:translateX(-50%)}}
+
+.about-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(34px,5vw,64px);align-items:center}
+.about-copy p{color:var(--muted);margin-top:18px;max-width:60ch}
+.about-signature{display:flex;align-items:center;gap:16px;margin-top:30px}
+.about-signature img{width:66px;height:66px;border-radius:50%;border:3px solid var(--gold);box-shadow:0 0 26px rgba(255,206,90,.4)}
+.about-signature .who b{font-family:var(--f-display);font-size:17px}
+.about-signature .who span{color:var(--faint);font-size:13px}
+.stats{display:grid;gap:14px}
+.stat{display:flex;align-items:center;gap:20px;padding:24px 26px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);
+  transition:transform var(--t-med) var(--ease-out),border-color var(--t-med),background var(--t-med)}
+.stat:hover{transform:translateX(6px);border-color:rgba(255,206,90,.4);background:var(--surface-2)}
+.stat .num{font-family:var(--f-display);font-size:32px;color:var(--gold);min-width:104px;line-height:1}
+.stat .lbl{color:#cdd9ef;font-size:15px}
+
+.tiers{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.tier{position:relative;display:flex;flex-direction:column;background:linear-gradient(170deg,rgba(255,255,255,.06),rgba(255,255,255,.015));
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:32px 28px 30px;overflow:hidden;
+  transition:transform var(--t-med) var(--ease-out),border-color var(--t-med),box-shadow var(--t-med)}
+.tier::before{content:"";position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity var(--t-med);
+  background:radial-gradient(500px 220px at 50% 0%,rgba(255,206,90,.14),transparent 70%)}
+.tier:hover{transform:translateY(-8px);border-color:rgba(255,206,90,.45);box-shadow:var(--shadow-card)}
+.tier:hover::before{opacity:1}
+.tier .thead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tier .num{font-family:var(--f-pixel);font-size:11px;color:var(--gold);letter-spacing:2px}
+.tier .rate{font-family:var(--f-display);font-size:18px;color:var(--gold);white-space:nowrap}
+.tier .rate small{font-size:12px;color:var(--faint)}
+.tier h3{margin:12px 0 4px}
+.tier .sub{color:var(--faint);font-size:13.5px;min-height:20px}
+.style-media{position:relative;margin:22px 0;min-height:132px;border-radius:14px;
+  background:linear-gradient(rgba(255,255,255,.02),rgba(255,255,255,.02)),repeating-conic-gradient(#0a1424 0% 25%, #0c1830 0% 50%) 50%/22px 22px;
+  border:1px solid var(--line);display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+.style-media .tag-img{image-rendering:pixelated;height:46px;width:auto;max-width:100%;filter:drop-shadow(0 4px 12px rgba(0,0,0,.6));transition:transform var(--t-slow) var(--ease-spring)}
+.tier:hover .style-media .tag-img{transform:scale(1.14)}
+.style-media.lit::after{content:"";position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  background:radial-gradient(220px 90px at 30% 40%,rgba(143,184,255,.35),transparent 70%);animation:sweep 4.5s ease-in-out infinite}
+@keyframes sweep{0%,100%{transform:translateX(-18%)}50%{transform:translateX(18%)}}
+.style-media .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  color:var(--faint);font-family:var(--f-pixel);font-size:10px;letter-spacing:1px;text-align:center;padding:14px}
+.style-media .ph .ic{width:26px;height:26px;color:#3a537a}
+.tier .desc{color:var(--muted);font-size:14px;flex:1}
+.tier .feats{list-style:none;margin-top:16px;display:flex;flex-direction:column;gap:9px}
+.tier .feats li{display:flex;align-items:flex-start;gap:10px;color:#d4dff2;font-size:13.5px}
+.tier .feats li .ic{width:16px;height:16px;color:var(--gold);flex-shrink:0;margin-top:2px}
+.tier.featured{border-color:rgba(255,206,90,.5);box-shadow:0 0 40px -10px rgba(255,181,46,.3)}
+.degrade-band{margin-top:24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;position:relative;overflow:hidden;
+  border:1px solid var(--line);border-radius:var(--r-lg);padding:26px 30px;
+  background:linear-gradient(120deg,rgba(255,107,107,.10),rgba(160,107,255,.10),rgba(143,184,255,.10))}
+.degrade-band .dm{position:relative;min-width:180px;height:70px;border-radius:12px;flex:0 0 auto;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;background:repeating-conic-gradient(#0a1424 0% 25%,#0c1830 0% 50%) 50%/18px 18px}
+.degrade-band .dm img{image-rendering:pixelated;height:34px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.6))}
+.degrade-band .dm .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--faint);font-family:var(--f-pixel);font-size:9px;letter-spacing:1px;text-align:center;padding:8px}
+.degrade-band .dt h4{font-family:var(--f-display);font-size:18px;background:linear-gradient(90deg,#ff9d9d,#c9a0ff,#9dc2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.degrade-band .dt p{color:var(--muted);font-size:14px;max-width:52ch;margin-top:4px}
+.degrade-band .cost{margin-left:auto;font-family:var(--f-display);font-size:20px;color:#1a1204;white-space:nowrap;
+  background:linear-gradient(90deg,#ffb3b3,#c9a0ff,#9dc2ff);padding:12px 22px;border-radius:var(--r-pill)}
+
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.card{background:linear-gradient(170deg,rgba(255,255,255,.055),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:var(--r-lg);padding:22px;text-align:center;
+  transition:transform var(--t-med) var(--ease-out),border-color var(--t-med),box-shadow var(--t-med)}
+.card:hover{transform:translateY(-8px);border-color:rgba(255,206,90,.45);box-shadow:var(--shadow-card)}
+.frame{position:relative;border-radius:14px;padding:34px 16px;margin-bottom:18px;min-height:120px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:linear-gradient(180deg,#0a1526,#070f1e);border:1px solid var(--line)}
+.frame::before{content:"";position:absolute;inset:0;opacity:.5;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:20px 20px}
+.frame img{position:relative;image-rendering:pixelated;height:50px;width:auto;max-width:100%;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.7));transition:transform var(--t-slow) var(--ease-spring)}
+.card:hover .frame img{transform:scale(1.16) translateY(-2px)}
+.card .name{font-family:var(--f-display);font-size:18px}
+.card .role{display:inline-flex;align-items:center;gap:7px;margin-top:8px;font-size:12.5px;color:var(--faint);font-family:var(--f-pixel);letter-spacing:.5px}
+.card .role .ic{width:14px;height:14px;color:var(--gold)}
+
+.estimator{background:linear-gradient(170deg,rgba(255,255,255,.06),rgba(255,255,255,.015));border:1px solid var(--line-2);border-radius:var(--r-xl);
+  padding:clamp(26px,3.4vw,42px);box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.estimator::before{content:"";position:absolute;top:-40%;right:-10%;width:320px;height:320px;pointer-events:none;background:radial-gradient(circle,rgba(255,206,90,.12),transparent 70%)}
+.est-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:clamp(24px,3vw,44px);align-items:center;position:relative}
+.est-rows{display:flex;flex-direction:column;gap:14px}
+.est-row{display:flex;align-items:center;gap:18px;padding:18px 20px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);flex-wrap:wrap}
+.est-row .ei{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:var(--gold-soft);border:1px solid rgba(255,206,90,.28);color:var(--gold);flex-shrink:0}
+.est-row.grad .ei{background:linear-gradient(120deg,rgba(255,107,107,.18),rgba(143,184,255,.18));border-color:rgba(160,107,255,.3);color:#c9a0ff}
+.est-row .ei .ic{width:22px;height:22px}
+.est-row .em b{font-family:var(--f-display);font-size:16px;display:block}
+.est-row .em span{color:var(--faint);font-size:12.5px}
+.stepper{margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(6,11,22,.6);border:1px solid var(--line-2);border-radius:var(--r-pill);padding:5px}
+.stepper button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line-2);background:var(--surface-2);color:var(--text);font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;
+  transition:transform var(--t-fast),background var(--t-fast),border-color var(--t-fast)}
+.stepper button:hover{background:var(--gold-soft);border-color:rgba(255,206,90,.4);color:var(--gold)}
+.stepper button:active{transform:scale(.9)}
+.stepper input{width:52px;text-align:center;background:transparent;border:0;color:var(--text);font-family:var(--f-display);font-size:20px;font-variant-numeric:tabular-nums;-moz-appearance:textfield}
+.stepper input::-webkit-outer-spin-button,.stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.est-summary{background:linear-gradient(170deg,rgba(255,206,90,.10),rgba(255,255,255,.02));border:1px solid rgba(255,206,90,.3);border-radius:var(--r-lg);padding:28px;text-align:center;display:flex;flex-direction:column;gap:6px}
+.est-summary .lbl{font-family:var(--f-pixel);font-size:10px;letter-spacing:1px;color:var(--faint);text-transform:uppercase}
+.est-summary .total{font-family:var(--f-display);font-size:clamp(40px,6vw,58px);color:var(--gold);line-height:1;font-variant-numeric:tabular-nums}
+.est-summary .brk{color:var(--muted);font-size:13px;min-height:20px}
+.est-summary .btn{margin-top:16px;width:100%}
+.est-note{margin-top:16px;font-size:12px;color:var(--faint);text-align:center}
+
+.pricing{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:stretch}
+.price{position:relative;display:flex;flex-direction:column;background:linear-gradient(170deg,rgba(255,255,255,.05),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:var(--r-lg);padding:36px 30px;
+  transition:transform var(--t-med) var(--ease-out),border-color var(--t-med),box-shadow var(--t-med)}
+.price:hover{transform:translateY(-8px);border-color:rgba(255,206,90,.4)}
+.price.featured{border-color:rgba(255,206,90,.55);box-shadow:0 0 46px -12px rgba(255,181,46,.4);background:linear-gradient(170deg,rgba(255,206,90,.1),rgba(255,255,255,.02))}
+.price .flag{align-self:flex-start;font-family:var(--f-pixel);font-size:9px;letter-spacing:1px;color:#1a1204;background:linear-gradient(90deg,var(--gold),var(--gold-2));padding:6px 12px;border-radius:99px;margin-bottom:14px}
+.price h3{font-size:22px;font-family:var(--f-display)}
+.price .amt{font-family:var(--f-display);font-size:50px;color:var(--gold);margin:12px 0 2px;font-variant-numeric:tabular-nums}
+.price .amt small{font-size:17px;color:var(--faint)}
+.price .tagline{color:var(--faint);font-size:13.5px;min-height:20px;margin-bottom:8px}
+.price ul{list-style:none;margin:18px 0 26px;display:flex;flex-direction:column;gap:12px;flex:1}
+.price li{display:flex;align-items:flex-start;gap:11px;color:#d4dff2;font-size:14.5px}
+.price li .ic{width:18px;height:18px;color:var(--gold);flex-shrink:0;margin-top:2px}
+.price .btn{width:100%}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.step{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:30px 26px;transition:transform var(--t-med) var(--ease-out),border-color var(--t-med)}
+.step:hover{transform:translateY(-6px);border-color:rgba(255,206,90,.4)}
+.step .no{font-family:var(--f-display);font-size:15px;width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--gold);background:var(--gold-soft);border:1px solid rgba(255,206,90,.3);margin-bottom:18px}
+.step h3{font-size:18px;margin-bottom:8px}
+.step p{color:var(--muted);font-size:14px}
+
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.feat{text-align:center;padding:34px 26px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);transition:transform var(--t-med) var(--ease-out),border-color var(--t-med)}
+.feat:hover{transform:translateY(-6px);border-color:rgba(255,206,90,.4)}
+.feat .fi{width:58px;height:58px;margin:0 auto 18px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:var(--gold-soft);border:1px solid rgba(255,206,90,.28);color:var(--gold)}
+.feat .fi .ic{width:28px;height:28px}
+.feat h3{font-size:17px;margin-bottom:8px}
+.feat p{color:var(--muted);font-size:14px}
+
+.contact-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(34px,5vw,60px);align-items:start}
+.contact-aside .lead{margin-top:20px}
+.discord-card{margin-top:30px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:linear-gradient(120deg,rgba(88,101,242,.16),rgba(88,101,242,.05));border:1px solid rgba(88,101,242,.35);border-radius:var(--r-lg);padding:22px 24px}
+.discord-card .di{width:50px;height:50px;border-radius:14px;background:var(--discord);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.discord-card .di .ic{width:28px;height:28px}
+.discord-card .dc b{font-family:var(--f-display);font-size:15px;display:block}
+.discord-card .dc .handle{font-family:var(--f-pixel);font-size:13px;color:#fff;background:rgba(88,101,242,.3);border:1px solid rgba(88,101,242,.5);padding:3px 10px;border-radius:8px;display:inline-block;margin-top:4px;letter-spacing:.5px}
+.discord-card .btn{margin-left:auto}
+.contact-points{display:flex;flex-direction:column;gap:16px;margin-top:28px}
+.cpoint{display:flex;align-items:center;gap:15px}
+.cpoint .ci{width:44px;height:44px;border-radius:12px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
+.cpoint .ci .ic{width:20px;height:20px}
+.cpoint b{display:block;font-size:15px}
+.cpoint span{color:var(--faint);font-size:13px}
+
+.form{background:linear-gradient(170deg,rgba(255,255,255,.05),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:var(--r-xl);padding:clamp(26px,3vw,40px)}
+.field{margin-bottom:20px}
+.field label{display:block;font-size:13.5px;font-weight:600;margin-bottom:9px;color:#cdd9ef}
+.field label .req{color:var(--gold)}
+.field input,.field select,.field textarea{width:100%;font-family:var(--f-body);font-size:15px;color:var(--text);background:rgba(6,11,22,.6);border:1px solid var(--line-2);border-radius:12px;padding:14px 16px;transition:border-color var(--t-fast),box-shadow var(--t-fast),background var(--t-fast)}
+.field textarea{resize:vertical;min-height:120px}
+.field input::placeholder,.field textarea::placeholder{color:var(--faint)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(255,206,90,.14);background:rgba(6,11,22,.85)}
+.field input[type=number]{-moz-appearance:textfield}
+.field select{appearance:none;cursor:pointer;padding-right:44px;background-repeat:no-repeat;background-position:right 14px center;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239db0d0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+.field.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.field.two .field{margin:0}
+.field .err{display:none;color:var(--danger);font-size:12.5px;margin-top:7px;align-items:center;gap:6px}
+.field .err .ic{width:14px;height:14px}
+.field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--danger);box-shadow:0 0 0 4px rgba(255,125,125,.12)}
+.field.invalid .err{display:flex}
+.field.reveal-field{display:none}
+.field.reveal-field.show{display:block;animation:slideDown .4s var(--ease-out)}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.hint{font-size:12px;color:var(--faint);margin-top:7px}
+.form-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:4px}
+.form-note{font-size:12px;color:var(--faint);flex:1;min-width:180px}
+.form-status{margin-top:18px;padding:15px 18px;border-radius:12px;font-size:14px;display:none;align-items:center;gap:11px}
+.form-status .ic{width:20px;height:20px;flex-shrink:0}
+.form-status.ok{display:flex;background:rgba(95,211,155,.12);border:1px solid rgba(95,211,155,.35);color:#a7ecca}
+.form-status.bad{display:flex;background:rgba(255,125,125,.12);border:1px solid rgba(255,125,125,.35);color:#ffc0c0}
+
+footer{border-top:1px solid var(--line);padding:56px 0 40px;background:rgba(7,12,24,.5);position:relative}
+.foot-grid{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.foot-brand{display:flex;align-items:center;gap:12px;font-family:var(--f-display);font-size:18px}
+.foot-brand img{width:42px;height:42px;border-radius:50%;border:2px solid var(--gold)}
+.foot-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.foot-links{display:flex;gap:8px;flex-wrap:wrap}
+.foot-links a{color:var(--muted);font-size:14px;padding:8px 14px;border-radius:var(--r-pill);transition:color var(--t-fast),background var(--t-fast)}
+.foot-links a:hover{color:var(--text);background:var(--surface)}
+.foot-copy{margin-top:34px;padding-top:26px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--faint);font-size:13px}
+.foot-copy .pixel{font-family:var(--f-pixel);font-size:9px;letter-spacing:1px}
+
+.top{position:fixed;right:24px;bottom:24px;z-index:90;width:50px;height:50px;border-radius:14px;background:rgba(11,18,34,.9);border:1px solid var(--line-2);backdrop-filter:blur(10px);color:var(--gold);
+  display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transform:translateY(12px);transition:opacity var(--t-med),visibility var(--t-med),transform var(--t-med),border-color var(--t-fast)}
+.top.show{opacity:1;visibility:visible;transform:none}
+.top:hover{border-color:var(--gold);transform:translateY(-3px)}
+.top .ic{width:22px;height:22px}
+
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);z-index:200;
+  display:flex;align-items:center;gap:10px;background:rgba(11,18,34,.96);border:1px solid var(--line-2);backdrop-filter:blur(10px);
+  color:var(--text);font-size:14px;font-weight:600;padding:13px 20px;border-radius:var(--r-pill);box-shadow:var(--shadow-card);
+  opacity:0;visibility:hidden;transition:opacity var(--t-med),transform var(--t-med) var(--ease-spring),visibility var(--t-med)}
+.toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+.toast .ic{width:18px;height:18px;color:var(--discord)}
+
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
+.reveal.in{opacity:1;transform:none}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.icon-sprite{display:none}
+.ic{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.ic.fill{fill:currentColor;stroke:none}
+.tilt{transform-style:preserve-3d;will-change:transform}
+
+@media (max-width:960px){
+  .hero-grid{grid-template-columns:1fr;gap:44px}
+  .hero-copy{max-width:none}
+  .chat-wrap{max-width:520px;margin-inline:auto;width:100%}
+  .about-grid,.contact-grid,.est-grid{grid-template-columns:1fr}
+  .gallery,.steps,.features{grid-template-columns:1fr 1fr}
+  .nav-links,.nav-cta{display:none}
+  .burger{display:inline-flex}
+}
+@media (max-width:640px){
+  .wrap{padding-inline:18px}
+  .tiers,.pricing,.gallery,.steps,.features{grid-template-columns:1fr}
+  .field.two{grid-template-columns:1fr}
+  .degrade-band,.discord-card{flex-direction:column;align-items:flex-start;text-align:left}
+  .degrade-band .cost,.discord-card .btn{margin-left:0}
+  .est-row{gap:12px}
+  .stat .num{font-size:26px;min-width:86px}
+  .foot-copy{flex-direction:column}
+  .lang{order:-1}
+}
+@media (max-width:400px){ .hero-cta .btn{width:100%} .brand .nm{font-size:16px} }
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .reveal{opacity:1;transform:none}
+  .msg{opacity:1;transform:none}
+  .marquee{animation:none}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgfx"></canvas>
+
+<svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-crown" viewBox="0 0 24 24"><path d="M11.56 3.27a.5.5 0 0 1 .88 0l2.95 5.6a1 1 0 0 0 1.52.3l4.27-3.67a.5.5 0 0 1 .8.52l-2.84 10.25a1 1 0 0 1-.95.73H5.81a1 1 0 0 1-.96-.73L2.02 6.02a.5.5 0 0 1 .8-.52l4.27 3.67a1 1 0 0 0 1.52-.3z"/><path d="M5 21h14"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.2"/><circle cx="17.5" cy="10.5" r="1.2"/><circle cx="8.5" cy="7.5" r="1.2"/><circle cx="6.5" cy="12.5" r="1.2"/><path d="M12 22a10 9 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-1.8a1.8 1.8 0 0 0-1.4 2.9 1.8 1.8 0 0 1-1.4 2.9z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.6-3.6a2 2 0 0 0-2.8 0L6 21"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 5l7 7-7 7"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.7 9a1 1 0 0 1-.7 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.2-2.7a1.2 1.2 0 0 1 1.5 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.8 2.2a2 2 0 0 0-1.6 0L2.6 6.1a1 1 0 0 0 0 1.8l8.6 3.9a2 2 0 0 0 1.6 0l8.6-3.9a1 1 0 0 0 0-1.8z"/><path d="m3 12 8.3 3.8a2 2 0 0 0 1.6 0L21 12"/><path d="m3 17 8.3 3.8a2 2 0 0 0 1.6 0L21 17"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.8-1.6l9.9-10.2a.5.5 0 0 1 .9.5l-1.9 6a1 1 0 0 0 .9 1.3h7a1 1 0 0 1 .8 1.6l-9.9 10.2a.5.5 0 0 1-.9-.5l1.9-6a1 1 0 0 0-.9-1.3z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-9 5.7a1.9 1.9 0 0 1-2 0L2 7"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M14.5 21.7a.5.5 0 0 0 .9 0l6.5-19a.5.5 0 0 0-.6-.6l-19 6.5a.5.5 0 0 0 0 .9l7.9 3.2a2 2 0 0 1 1.1 1.1z"/><path d="m21.9 2.1-11 11"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M11.5 2.6a.6.6 0 0 1 1 0l2.6 5.3 5.8.8a.6.6 0 0 1 .3 1l-4.2 4.1 1 5.8a.6.6 0 0 1-.9.7L12 17.6l-5.2 2.7a.6.6 0 0 1-.9-.7l1-5.8L2.7 9.7a.6.6 0 0 1 .3-1l5.8-.8z"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></symbol>
+  <symbol id="i-cursor" viewBox="0 0 24 24"><path d="m4 4 7 16 2.5-6.5L20 11z"/></symbol>
+  <symbol id="i-calc" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14v4M8 18h4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></symbol>
+  <symbol id="i-discord" viewBox="0 0 24 24"><path class="fill" d="M20.3 4.4A17 17 0 0 0 16 3l-.2.4a12 12 0 0 1 3.7 1.9 11.5 11.5 0 0 0-9.8 0A12 12 0 0 1 13.3 3.4L13 3a17 17 0 0 0-4.3 1.4C5.6 8 4.8 11.5 5.1 15a17 17 0 0 0 5.1 2.6l.7-1.1a11 11 0 0 1-1.7-.8l.4-.3a11.5 11.5 0 0 0 9.8 0l.4.3a11 11 0 0 1-1.7.8l.7 1.1a17 17 0 0 0 5.1-2.6c.4-4-.9-7.5-3.3-10.6zM9.9 13.6c-.9 0-1.6-.8-1.6-1.8s.7-1.8 1.6-1.8 1.6.8 1.6 1.8-.7 1.8-1.6 1.8zm4.2 0c-.9 0-1.6-.8-1.6-1.8s.7-1.8 1.6-1.8 1.6.8 1.6 1.8-.7 1.8-1.6 1.8z"/></symbol>
+</svg>
+
+<div class="progress" id="progress"></div>
+<a href="#main" class="skip" data-fr="Aller au contenu" data-en="Skip to content">Aller au contenu</a>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-inner">
+    <a href="#" class="brand" aria-label="Pogzy — accueil"><img src="pogzy.png" alt="Avatar Pogzy"><span class="nm">Pogzy</span></a>
+    <nav class="nav-links" aria-label="Navigation principale">
+      <a href="#about" data-fr="À propos" data-en="About">À propos</a>
+      <a href="#styles" data-fr="Styles" data-en="Styles">Styles</a>
+      <a href="#work" data-fr="Réalisations" data-en="Work">Réalisations</a>
+      <a href="#pricing" data-fr="Tarifs" data-en="Pricing">Tarifs</a>
+      <a href="#contact" data-fr="Contact" data-en="Contact">Contact</a>
+    </nav>
+    <div class="nav-tools">
+      <div class="lang" role="group" aria-label="Langue / Language">
+        <button type="button" data-lang="fr" aria-pressed="true">FR</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <button type="button" class="icon-btn disc js-discord" aria-label="Copier mon pseudo Discord"><svg class="ic fill"><use href="#i-discord"/></svg></button>
+      <a href="#contact" class="btn btn-gold nav-cta" data-fr="Commander" data-en="Order">Commander</a>
+      <button class="icon-btn burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mobileMenu"><svg class="ic"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<div class="scrim" id="scrim"></div>
+<aside class="mobile-menu" id="mobileMenu" aria-hidden="true">
+  <button class="icon-btn burger" id="burgerClose" aria-label="Fermer le menu" style="position:absolute;top:22px;right:22px"><svg class="ic"><use href="#i-close"/></svg></button>
+  <a href="#about"><svg class="ic"><use href="#i-user"/></svg><span data-fr="À propos" data-en="About">À propos</span></a>
+  <a href="#styles"><svg class="ic"><use href="#i-palette"/></svg><span data-fr="Styles" data-en="Styles">Styles</span></a>
+  <a href="#work"><svg class="ic"><use href="#i-layers"/></svg><span data-fr="Réalisations" data-en="Work">Réalisations</span></a>
+  <a href="#pricing"><svg class="ic"><use href="#i-sparkle"/></svg><span data-fr="Tarifs" data-en="Pricing">Tarifs</span></a>
+  <a href="#contact"><svg class="ic"><use href="#i-mail"/></svg><span data-fr="Contact" data-en="Contact">Contact</span></a>
+  <button type="button" class="btn btn-discord js-discord"><svg class="ic fill"><use href="#i-discord"/></svg><span data-fr="Copier le Discord" data-en="Copy Discord">Copier le Discord</span></button>
+  <a href="#contact" class="btn btn-gold" data-fr="Commander un grade" data-en="Order a rank">Commander un grade</a>
+</aside>
+
+<main id="main">
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow reveal"><svg class="ic"><use href="#i-crown"/></svg><span data-fr="Grades Minecraft sur mesure" data-en="Custom Minecraft ranks">Grades Minecraft sur mesure</span></span>
+      <h1 class="h1 reveal" data-fr='Des grades <span class="acc">uniques</span><br>pour votre serveur' data-en='Ranks that make<br>your server <span class="acc">unique</span>'>Des grades <span class="acc">uniques</span><br>pour votre serveur</h1>
+      <p class="lead reveal" data-fr="Démarquez votre serveur avec des grades personnalisés, faits main pixel par pixel — style Simple ou Complexe avec jeu de lumière, et option dégradé premium." data-en="Stand out with custom ranks, hand-crafted pixel by pixel — Simple or Complex with lighting effects, plus a premium gradient option.">Démarquez votre serveur avec des grades personnalisés, faits main pixel par pixel — style Simple ou Complexe avec jeu de lumière, et option dégradé premium.</p>
+      <div class="hero-cta reveal">
+        <a href="#contact" class="btn btn-gold btn-lg magnetic"><span data-fr="Commander un grade" data-en="Order a rank">Commander un grade</span><svg class="ic"><use href="#i-arrow"/></svg></a>
+        <button type="button" class="btn btn-discord btn-lg magnetic js-discord"><svg class="ic fill"><use href="#i-discord"/></svg><span data-fr="Discord" data-en="Discord">Discord</span></button>
+      </div>
+      <div class="hero-badges reveal">
+        <span class="pill"><svg class="ic"><use href="#i-server"/></svg><span data-fr="Développeur de serveurs" data-en="Server developer">Développeur de serveurs</span></span>
+        <span class="pill"><svg class="ic"><use href="#i-palette"/></svg><span data-fr="Game design" data-en="Game design">Game design</span></span>
+        <span class="pill"><svg class="ic"><use href="#i-clock"/></svg><span data-fr="Plusieurs années d'expérience" data-en="Years of experience">Plusieurs années d'expérience</span></span>
+      </div>
+    </div>
+    <div class="chat-wrap reveal">
+      <div class="chat tilt" role="img" aria-label="Aperçu d'un chat Minecraft montrant des grades personnalisés">
+        <div class="chat-top">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="chat-title">serveur.minecraft — chat</span>
+          <span class="chat-live"><span class="blip"></span><span data-fr="128 en ligne" data-en="128 online">128 en ligne</span></span>
+        </div>
+        <div class="chat-body" id="heroChat">
+          <div class="msg"><img class="tag" src="boutique.png" alt="Grade Boutique"><span class="usr">Shadowzz</span><span class="sep">›</span><span class="txt" data-fr="nouvelle boutique en ligne !" data-en="new shop is live!">nouvelle boutique en ligne !</span></div>
+          <div class="msg"><img class="tag" src="gerant.png" alt="Grade Gérant"><span class="usr">AdminX</span><span class="sep">›</span><span class="txt" data-fr="bienvenue sur le serveur !" data-en="welcome to the server!">bienvenue sur le serveur !</span></div>
+          <div class="msg"><span class="usr joueur">Player_74</span><span class="sep">›</span><span class="txt" data-fr="wow ce grade est stylé" data-en="wow that rank is clean">wow ce grade est stylé</span></div>
+          <div class="msg"><img class="tag" src="twitch.png" alt="Grade Twitch"><span class="usr">StreamZ</span><span class="sep">›</span><span class="txt" data-fr="live dans 5 minutes !" data-en="going live in 5 min!">live dans 5 minutes !</span></div>
+          <div class="msg"><span class="usr joueur">Nova</span><span class="sep">›</span><span class="txt" data-fr="où je peux avoir le mien ?" data-en="where do I get mine?">où je peux avoir le mien ?</span></div>
+          <div class="chat-typing" aria-hidden="true"><span class="d"></span><span class="d"></span><span class="d"></span></div>
+        </div>
+        <div class="chat-input" aria-hidden="true">
+          <span class="bar" data-fr="Votre grade ici…" data-en="Your rank here…">Votre grade ici…</span>
+          <span class="send"><svg class="ic"><use href="#i-send"/></svg></span>
+        </div>
+      </div>
+      <p class="chat-caption" data-fr="↑ vos grades, en situation réelle dans le tchat" data-en="↑ your ranks, shown live in chat">↑ vos grades, en situation réelle dans le tchat</p>
+    </div>
+  </div>
+</section>
+
+<div class="strip" aria-hidden="true">
+  <div class="marquee" id="marquee">
+    <span><svg class="ic"><use href="#i-check"/></svg>100% sur mesure</span>
+    <span><svg class="ic"><use href="#i-image"/></svg>Livraison .PNG HD</span>
+    <span><svg class="ic"><use href="#i-sun"/></svg>Jeu de lumière</span>
+    <span><svg class="ic"><use href="#i-layers"/></svg>Simple &amp; Complexe</span>
+    <span><svg class="ic"><use href="#i-sparkle"/></svg>Dès 1,5€ / grade</span>
+    <span><svg class="ic"><use href="#i-check"/></svg>100% sur mesure</span>
+    <span><svg class="ic"><use href="#i-image"/></svg>Livraison .PNG HD</span>
+    <span><svg class="ic"><use href="#i-sun"/></svg>Jeu de lumière</span>
+    <span><svg class="ic"><use href="#i-layers"/></svg>Simple &amp; Complexe</span>
+    <span><svg class="ic"><use href="#i-sparkle"/></svg>Dès 1,5€ / grade</span>
+  </div>
+</div>
+
+<section class="section" id="about">
+  <div class="wrap about-grid">
+    <div class="about-copy reveal">
+      <span class="eyebrow"><svg class="ic"><use href="#i-user"/></svg><span data-fr="Qui suis-je ?" data-en="Who am I?">Qui suis-je ?</span></span>
+      <h2 class="h2" data-fr='Un <span class="acc">passionné</span> au service<br>de votre serveur' data-en='A <span class="acc">passionate</span> creator<br>for your server'>Un <span class="acc">passionné</span> au service<br>de votre serveur</h2>
+      <p data-fr="Je m'appelle Pogzy et je développe des serveurs Minecraft depuis plusieurs années. J'ai mis mon expérience de développeur et de game designer au service d'un objectif simple : créer des grades qui rendent votre serveur plus professionnel et plus attractif." data-en="I'm Pogzy and I've been developing Minecraft servers for years. I put my experience as a developer and game designer toward one simple goal: creating ranks that make your server look more professional and more attractive.">Je m'appelle Pogzy et je développe des serveurs Minecraft depuis plusieurs années. J'ai mis mon expérience de développeur et de game designer au service d'un objectif simple : créer des grades qui rendent votre serveur plus professionnel et plus attractif.</p>
+      <p data-fr="Du petit grade net et lisible au grade complexe avec jeu de lumière, chaque création est faite sur mesure selon vos couleurs et votre univers." data-en="From a small, clean and readable rank to a complex one with lighting effects, every creation is fully custom — built around your colors and your world.">Du petit grade net et lisible au grade complexe avec jeu de lumière, chaque création est faite sur mesure selon vos couleurs et votre univers.</p>
+      <div class="about-signature">
+        <img src="pogzy.png" alt="Avatar Pogzy">
+        <div class="who"><b>Pogzy</b><br><span data-fr="Créateur de grades &amp; dev serveurs" data-en="Rank creator &amp; server dev">Créateur de grades &amp; dev serveurs</span></div>
+      </div>
+    </div>
+    <div class="stats reveal stagger">
+      <div class="stat"><span class="num" data-count="100" data-suffix="%">100%</span><span class="lbl" data-fr="Créations sur mesure" data-en="Custom-made creations">Créations sur mesure</span></div>
+      <div class="stat"><span class="num">.PNG</span><span class="lbl" data-fr="Fichiers HD livrés" data-en="HD files delivered">Fichiers HD livrés</span></div>
+      <div class="stat"><span class="num" data-count="2" data-suffix="">2</span><span class="lbl" data-fr="Niveaux : Simple &amp; Complexe" data-en="Tiers: Simple &amp; Complex">Niveaux : Simple &amp; Complexe</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="styles">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <span class="eyebrow"><svg class="ic"><use href="#i-palette"/></svg><span data-fr="Ce que je propose" data-en="What I offer">Ce que je propose</span></span>
+      <h2 class="h2" data-fr='Deux <span class="acc">niveaux</span> de détail' data-en='Two <span class="acc">levels</span> of detail'>Deux <span class="acc">niveaux</span> de détail</h2>
+      <p class="lead" style="margin-inline:auto;margin-top:16px" data-fr="Du petit grade épuré au grade complexe avec effets de lumière — choisissez le rendu qui colle à votre serveur." data-en="From a clean little rank to a complex one with lighting effects — pick the look that fits your server.">Du petit grade épuré au grade complexe avec effets de lumière — choisissez le rendu qui colle à votre serveur.</p>
+    </div>
+    <div class="tiers reveal stagger">
+      <div class="tier tilt">
+        <div class="thead"><span class="num">STYLE 01</span><span class="rate">1,5 €<small> /grade</small></span></div>
+        <h3 data-fr="Simple" data-en="Simple">Simple</h3>
+        <p class="sub" data-fr="Texte net sur fond uni" data-en="Clean text, solid background">Texte net sur fond uni</p>
+        <div class="style-media" data-tier="simple">
+          <img class="tag-img" src="simple.png" alt="Grade en style Simple" onerror="this.closest('.style-media').classList.add('is-missing');this.style.display='none'">
+          <span class="ph"><svg class="ic"><use href="#i-image"/></svg><span data-fr="Aperçu Simple" data-en="Simple preview">Aperçu Simple</span></span>
+        </div>
+        <p class="desc" data-fr="Un petit grade (~30 px), texte simple et lisible sur fond uni. Parfait pour des rangs clairs et efficaces." data-en="A small rank (~30 px), simple readable text on a solid background. Perfect for clear, efficient ranks.">Un petit grade (~30 px), texte simple et lisible sur fond uni. Parfait pour des rangs clairs et efficaces.</p>
+        <ul class="feats">
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Texte pixel lisible en jeu" data-en="Pixel text readable in-game">Texte pixel lisible en jeu</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Fond uni, format compact" data-en="Solid background, compact size">Fond uni, format compact</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Livraison .png HD" data-en=".png HD delivery">Livraison .png HD</span></li>
+        </ul>
+      </div>
+      <div class="tier featured tilt">
+        <div class="thead"><span class="num">STYLE 02</span><span class="rate">3 €<small> /grade</small></span></div>
+        <h3 data-fr="Complexe" data-en="Complex">Complexe</h3>
+        <p class="sub" data-fr="Détaillé, avec jeu de lumière" data-en="Detailed, with lighting">Détaillé, avec jeu de lumière</p>
+        <div class="style-media lit" data-tier="complexe">
+          <img class="tag-img" src="complexe.png" alt="Grade en style Complexe" onerror="this.closest('.style-media').classList.add('is-missing');this.style.display='none'">
+          <span class="ph"><svg class="ic"><use href="#i-image"/></svg><span data-fr="Aperçu Complexe" data-en="Complex preview">Aperçu Complexe</span></span>
+        </div>
+        <p class="desc" data-fr="Un grade plus grand à l'alphabet avancé, beaucoup plus de détails et un jeu de lumière pour un rendu premium qui capte le regard." data-en="A larger rank with an advanced alphabet, far more detail and a lighting effect for a premium look that grabs attention.">Un grade plus grand à l'alphabet avancé, beaucoup plus de détails et un jeu de lumière pour un rendu premium qui capte le regard.</p>
+        <ul class="feats">
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Alphabet avancé &amp; grand format" data-en="Advanced alphabet &amp; large size">Alphabet avancé &amp; grand format</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Jeu de lumière / effets" data-en="Lighting / light effects">Jeu de lumière / effets</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Beaucoup plus de détails" data-en="Much more detail">Beaucoup plus de détails</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="degrade-band reveal">
+      <div class="dm" data-tier="degrade">
+        <img src="complexe_degrade.png" alt="Grade avec dégradé" onerror="this.closest('.dm').style.display='none'">
+        <span class="ph"><span data-fr="Aperçu dégradé" data-en="Gradient preview">Aperçu dégradé</span></span>
+      </div>
+      <div class="dt">
+        <h4 data-fr="Option Dégradé" data-en="Gradient add-on">Option Dégradé</h4>
+        <p data-fr="Ajoutez un dégradé de couleurs travaillé pixel par pixel sur n'importe quel grade, pour un rendu encore plus premium." data-en="Add a color gradient crafted pixel by pixel on any rank, for an even more premium finish.">Ajoutez un dégradé de couleurs travaillé pixel par pixel sur n'importe quel grade, pour un rendu encore plus premium.</p>
+      </div>
+      <span class="cost">+3,5 € <small style="font-size:12px">/grade</small></span>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="work">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow"><svg class="ic"><use href="#i-layers"/></svg><span data-fr="Portfolio" data-en="Portfolio">Portfolio</span></span>
+      <h2 class="h2" data-fr='Quelques <span class="acc">réalisations</span>' data-en='Some of my <span class="acc">work</span>'>Quelques <span class="acc">réalisations</span></h2>
+    </div>
+    <div class="gallery reveal stagger">
+      <div class="card tilt"><div class="frame"><img src="fondateur.png" alt="Grade Fondateur"></div><div class="name" data-fr="« Fondateur »" data-en="“Owner”">« Fondateur »</div><span class="role"><svg class="ic"><use href="#i-cursor"/></svg><span data-fr="Propriétaire de Serveur" data-en="Server Owner">Propriétaire de Serveur</span></span></div>
+      <div class="card tilt"><div class="frame"><img src="simple_degrade.png" alt="Grade Empereur"></div><div class="name" data-fr="« Gérant »" data-en="“Manager”">« Gérant »</div><span class="role"><svg class="ic"><use href="#i-shield"/></svg><span data-fr="Identité de Joueur" data-en="Player identity">Identité de Joueur</span></span></div>
+      <div class="card tilt"><div class="frame"><img src="twitch.png" alt="Grade Twitch"></div><div class="name" data-fr="« Twitch »" data-en="“Twitch”">« Twitch »</div><span class="role"><svg class="ic"><use href="#i-bolt"/></svg><span data-fr="Créateurs de contenu" data-en="Content creators">Créateurs de contenu</span></span></div>
+      <div class="card tilt" data-optional><div class="frame"><img src="simple-1.png" alt="Grade Simple" onerror="var c=this.closest('.card');if(c)c.style.display='none'"></div><div class="name" data-fr="Style Simple" data-en="Simple style">Style Simple</div><span class="role"><svg class="ic"><use href="#i-check"/></svg><span data-fr="Net &amp; efficace" data-en="Clean &amp; efficient">Net &amp; efficace</span></span></div>
+      <div class="card tilt" data-optional><div class="frame"><img src="complexe-1.png" alt="Grade Complexe" onerror="var c=this.closest('.card');if(c)c.style.display='none'"></div><div class="name" data-fr="Style Complexe" data-en="Complex style">Style Complexe</div><span class="role"><svg class="ic"><use href="#i-sun"/></svg><span data-fr="Jeu de lumière" data-en="Lighting effect">Jeu de lumière</span></span></div>
+      <div class="card tilt" data-optional><div class="frame"><img src="degrade_complexe.png" alt="Grade Dégradé" onerror="var c=this.closest('.card');if(c)c.style.display='none'"></div><div class="name" data-fr="Dégradé" data-en="Gradient">Dégradé</div><span class="role"><svg class="ic"><use href="#i-sparkle"/></svg><span data-fr="Rendu premium" data-en="Premium finish">Rendu premium</span></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="estimate">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <span class="eyebrow"><svg class="ic"><use href="#i-calc"/></svg><span data-fr="Estimateur" data-en="Estimator">Estimateur</span></span>
+      <h2 class="h2" data-fr='Estimez votre <span class="acc">devis</span> en direct' data-en='Estimate your <span class="acc">quote</span> live'>Estimez votre <span class="acc">devis</span> en direct</h2>
+      <p class="lead" style="margin-inline:auto;margin-top:16px" data-fr="Réglez le nombre de grades par style : le total se calcule instantanément." data-en="Set how many ranks you want per style: the total updates instantly.">Réglez le nombre de grades par style : le total se calcule instantanément.</p>
+    </div>
+    <div class="estimator reveal">
+      <div class="est-grid">
+        <div class="est-rows">
+          <div class="est-row">
+            <span class="ei"><svg class="ic"><use href="#i-check"/></svg></span>
+            <span class="em"><b data-fr="Grades Simple" data-en="Simple ranks">Grades Simple</b><span>1,5 € / grade</span></span>
+            <span class="stepper"><button type="button" data-step="simple" data-dir="-1" aria-label="Moins de grades simple">−</button><input type="text" inputmode="numeric" id="qSimple" value="3" aria-label="Nombre de grades simple"><button type="button" data-step="simple" data-dir="1" aria-label="Plus de grades simple">+</button></span>
+          </div>
+          <div class="est-row">
+            <span class="ei"><svg class="ic"><use href="#i-sun"/></svg></span>
+            <span class="em"><b data-fr="Grades Complexe" data-en="Complex ranks">Grades Complexe</b><span>3 € / grade</span></span>
+            <span class="stepper"><button type="button" data-step="complexe" data-dir="-1" aria-label="Moins de grades complexe">−</button><input type="text" inputmode="numeric" id="qComplexe" value="1" aria-label="Nombre de grades complexe"><button type="button" data-step="complexe" data-dir="1" aria-label="Plus de grades complexe">+</button></span>
+          </div>
+          <div class="est-row grad">
+            <span class="ei"><svg class="ic"><use href="#i-sparkle"/></svg></span>
+            <span class="em"><b data-fr="Dont en Dégradé" data-en="Of which Gradient">Dont en Dégradé</b><span data-fr="+3,5 € / grade" data-en="+€3.5 / rank">+3,5 € / grade</span></span>
+            <span class="stepper"><button type="button" data-step="degrade" data-dir="-1" aria-label="Moins de dégradé">−</button><input type="text" inputmode="numeric" id="qDegrade" value="0" aria-label="Nombre de grades en dégradé"><button type="button" data-step="degrade" data-dir="1" aria-label="Plus de dégradé">+</button></span>
+          </div>
+          <p class="est-note" data-fr="Le dégradé est un supplément appliqué sur vos grades (Simple ou Complexe)." data-en="The gradient is an add-on applied to your ranks (Simple or Complex).">Le dégradé est un supplément appliqué sur vos grades (Simple ou Complexe).</p>
+        </div>
+        <div class="est-summary">
+          <span class="lbl" data-fr="Total estimé" data-en="Estimated total">Total estimé</span>
+          <span class="total" id="estTotal">7,50&nbsp;€</span>
+          <span class="brk" id="estBreak">4 grades · dont 0 en dégradé</span>
+          <button type="button" class="btn btn-gold magnetic" id="estFill"><span data-fr="Commander ce devis" data-en="Order this quote">Commander ce devis</span><svg class="ic"><use href="#i-arrow"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <span class="eyebrow"><svg class="ic"><use href="#i-sparkle"/></svg><span data-fr="Tarification" data-en="Pricing">Tarification</span></span>
+      <h2 class="h2" data-fr='Des <span class="acc">prix clairs</span>, au grade' data-en='<span class="acc">Clear pricing</span>, per rank'>Des <span class="acc">prix clairs</span>, au grade</h2>
+    </div>
+    <div class="pricing reveal stagger">
+      <div class="price tilt">
+        <h3 data-fr="Simple" data-en="Simple">Simple</h3>
+        <div class="amt">1,5<small> € /grade</small></div>
+        <p class="tagline" data-fr="Petit grade, net et lisible" data-en="Small rank, clean and readable">Petit grade, net et lisible</p>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Texte simple sur fond uni" data-en="Simple text on solid background">Texte simple sur fond uni</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Format compact (~30 px)" data-en="Compact size (~30 px)">Format compact (~30 px)</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Fichier .png HD" data-en=".png HD file">Fichier .png HD</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="100% sur mesure" data-en="100% custom">100% sur mesure</span></li>
+        </ul>
+        <a href="#contact" class="btn btn-ghost" data-fr="Choisir" data-en="Choose">Choisir</a>
+      </div>
+      <div class="price featured tilt">
+        <span class="flag" data-fr="★ LE PLUS DÉTAILLÉ" data-en="★ MOST DETAILED">★ LE PLUS DÉTAILLÉ</span>
+        <h3 data-fr="Complexe" data-en="Complex">Complexe</h3>
+        <div class="amt">3<small> € /grade</small></div>
+        <p class="tagline" data-fr="Grand format, jeu de lumière" data-en="Large size, lighting effect">Grand format, jeu de lumière</p>
+        <ul>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Alphabet avancé, grand format" data-en="Advanced alphabet, large size">Alphabet avancé, grand format</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Beaucoup plus de détails" data-en="Much more detail">Beaucoup plus de détails</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Jeu de lumière / effets" data-en="Lighting / effects">Jeu de lumière / effets</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span data-fr="Fichier .png HD" data-en=".png HD file">Fichier .png HD</span></li>
+        </ul>
+        <a href="#contact" class="btn btn-gold" data-fr="Choisir" data-en="Choose">Choisir</a>
+      </div>
+    </div>
+    <div class="degrade-band reveal" style="margin-top:22px">
+      <span class="ei" style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(120deg,rgba(255,107,107,.18),rgba(143,184,255,.18));border:1px solid rgba(160,107,255,.3);color:#c9a0ff;flex:0 0 auto"><svg class="ic"><use href="#i-sparkle"/></svg></span>
+      <div class="dt">
+        <h4 data-fr="Supplément Dégradé" data-en="Gradient add-on">Supplément Dégradé</h4>
+        <p data-fr="À ajouter sur n'importe quel grade Simple ou Complexe pour un dégradé de couleurs premium." data-en="Add to any Simple or Complex rank for a premium color gradient.">À ajouter sur n'importe quel grade Simple ou Complexe pour un dégradé de couleurs premium.</p>
+      </div>
+      <span class="cost">+3,5 € <small style="font-size:12px">/grade</small></span>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="process">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <span class="eyebrow"><svg class="ic"><use href="#i-cursor"/></svg><span data-fr="Comment ça marche" data-en="How it works">Comment ça marche</span></span>
+      <h2 class="h2" data-fr="De l'idée au grade, en <span class='acc'>3 étapes</span>" data-en="From idea to rank in <span class='acc'>3 steps</span>">De l'idée au grade, en <span class="acc">3 étapes</span></h2>
+    </div>
+    <div class="steps reveal stagger">
+      <div class="step"><div class="no">01</div><h3 data-fr="Votre brief" data-en="Your brief">Votre brief</h3><p data-fr="Via le formulaire, indiquez le nombre de grades, leurs noms, vos couleurs et le style (Simple ou Complexe)." data-en="Through the form, tell me how many ranks you want, their names, your colors and the style (Simple or Complex).">Via le formulaire, indiquez le nombre de grades, leurs noms, vos couleurs et le style (Simple ou Complexe).</p></div>
+      <div class="step"><div class="no">02</div><h3 data-fr="Je crée à la main" data-en="I craft it by hand">Je crée à la main</h3><p data-fr="Je conçois vos grades pixel par pixel et vous partage un aperçu. On ajuste ensemble jusqu'au rendu parfait." data-en="I design your ranks pixel by pixel and share a preview. We fine-tune together until it's perfect.">Je conçois vos grades pixel par pixel et vous partage un aperçu. On ajuste ensemble jusqu'au rendu parfait.</p></div>
+      <div class="step"><div class="no">03</div><h3 data-fr="Livraison" data-en="Delivery">Livraison</h3><p data-fr="Vous recevez vos fichiers .png HD, prêts à l'emploi sur votre serveur." data-en="You receive your ready-to-use .png HD files for your server.">Vous recevez vos fichiers .png HD, prêts à l'emploi sur votre serveur.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="why">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <span class="eyebrow"><svg class="ic"><use href="#i-star"/></svg><span data-fr="Pourquoi moi" data-en="Why me">Pourquoi moi</span></span>
+      <h2 class="h2" data-fr='Des <span class="acc">avantages</span> concrets' data-en='Real <span class="acc">advantages</span>'>Des <span class="acc">avantages</span> concrets</h2>
+    </div>
+    <div class="features reveal stagger">
+      <div class="feat"><div class="fi"><svg class="ic"><use href="#i-target"/></svg></div><h3 data-fr="100% sur mesure" data-en="100% custom">100% sur mesure</h3><p data-fr="Chaque grade est conçu selon vos besoins et l'identité de votre serveur." data-en="Every rank is designed around your needs and your server's identity.">Chaque grade est conçu selon vos besoins et l'identité de votre serveur.</p></div>
+      <div class="feat"><div class="fi"><svg class="ic"><use href="#i-sun"/></svg></div><h3 data-fr="Jeu de lumière" data-en="Lighting effects">Jeu de lumière</h3><p data-fr="Sur le style Complexe, des effets de lumière donnent un rendu premium qui capte le regard." data-en="On the Complex style, lighting effects give a premium look that grabs attention.">Sur le style Complexe, des effets de lumière donnent un rendu premium qui capte le regard.</p></div>
+      <div class="feat"><div class="fi"><svg class="ic"><use href="#i-image"/></svg></div><h3 data-fr="Livraison en .png" data-en="Delivered as .png">Livraison en .png</h3><p data-fr="Des fichiers propres et optimisés, prêts à être utilisés sur votre serveur." data-en="Clean, optimized files, ready to use on your server.">Des fichiers propres et optimisés, prêts à être utilisés sur votre serveur.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="contact">
+  <div class="wrap contact-grid">
+    <div class="contact-aside reveal">
+      <span class="eyebrow"><svg class="ic"><use href="#i-mail"/></svg><span data-fr="On commence ?" data-en="Let's start">On commence ?</span></span>
+      <h2 class="h2" data-fr='Prêt à donner du <span class="acc">style</span><br>à votre serveur ?' data-en='Ready to add <span class="acc">style</span><br>to your server?'>Prêt à donner du <span class="acc">style</span><br>à votre serveur ?</h2>
+      <p class="lead" data-fr="Décrivez votre projet de grades et je vous recontacte sur Discord avec un premier aperçu." data-en="Describe your rank project and I'll reach out on Discord with a first preview.">Décrivez votre projet de grades et je vous recontacte sur Discord avec un premier aperçu.</p>
+      <div class="discord-card">
+        <span class="di"><svg class="ic fill"><use href="#i-discord"/></svg></span>
+        <div class="dc"><b data-fr="Ajoutez-moi sur Discord" data-en="Add me on Discord">Ajoutez-moi sur Discord</b><span class="handle" id="discordHandle">pogzy_</span></div>
+        <button type="button" class="btn btn-discord js-discord"><svg class="ic"><use href="#i-copy"/></svg><span data-fr="Copier le pseudo" data-en="Copy username">Copier le pseudo</span></button>
+      </div>
+      <div class="contact-points">
+        <div class="cpoint"><div class="ci"><svg class="ic"><use href="#i-bolt"/></svg></div><div><b data-fr="Réponse rapide" data-en="Fast reply">Réponse rapide</b><span data-fr="Un premier retour sous 24–48 h" data-en="First reply within 24–48h">Un premier retour sous 24–48 h</span></div></div>
+        <div class="cpoint"><div class="ci"><svg class="ic"><use href="#i-palette"/></svg></div><div><b data-fr="Aperçu avant paiement" data-en="Preview before payment">Aperçu avant paiement</b><span data-fr="Vous validez le rendu avant de régler" data-en="You approve the look before you pay">Vous validez le rendu avant de régler</span></div></div>
+        <div class="cpoint"><div class="ci"><svg class="ic"><use href="#i-check"/></svg></div><div><b data-fr="Retouches incluses" data-en="Revisions included">Retouches incluses</b><span data-fr="On ajuste jusqu'à ce que ce soit parfait" data-en="We adjust until it's perfect">On ajuste jusqu'à ce que ce soit parfait</span></div></div>
+      </div>
+    </div>
+
+    <form class="form reveal" id="orderForm" novalidate>
+      <div class="field two">
+        <div class="field">
+          <label for="discord" data-fr="Pseudo Discord <span class='req'>*</span>" data-en="Discord username <span class='req'>*</span>">Pseudo Discord <span class="req">*</span></label>
+          <input type="text" id="discord" name="discord" required data-fr-ph="ex. pogzy_" data-en-ph="e.g. pogzy_" placeholder="ex. pogzy_">
+          <span class="err"><svg class="ic"><use href="#i-close"/></svg><span data-fr="Indiquez votre pseudo Discord" data-en="Enter your Discord username">Indiquez votre pseudo Discord</span></span>
+        </div>
+        <div class="field">
+          <label for="count" data-fr="Nombre de grades <span class='req'>*</span>" data-en="Number of ranks <span class='req'>*</span>">Nombre de grades <span class="req">*</span></label>
+          <input type="text" inputmode="numeric" id="count" name="count" required data-fr-ph="ex. 10" data-en-ph="e.g. 10" placeholder="ex. 10">
+          <span class="err"><svg class="ic"><use href="#i-close"/></svg><span data-fr="Indiquez un nombre de grades" data-en="Enter a number of ranks">Indiquez un nombre de grades</span></span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="option" data-fr="Option" data-en="Add-on">Option</label>
+        <select id="option" name="option">
+          <option value="non" data-fr="Non" data-en="No">Non</option>
+          <option value="degrade" data-fr="Dégradé (+3,5 € / grade)" data-en="Gradient (+€3.5 / rank)">Dégradé (+3,5 € / grade)</option>
+        </select>
+      </div>
+      <div class="field reveal-field" id="degradeQtyField">
+        <label for="degradeQty" data-fr="Combien de grades en dégradé ? <span class='req'>*</span>" data-en="How many ranks in gradient? <span class='req'>*</span>">Combien de grades en dégradé ? <span class="req">*</span></label>
+        <input type="text" inputmode="numeric" id="degradeQty" name="degradeQty" data-fr-ph="ex. 3" data-en-ph="e.g. 3" placeholder="ex. 3">
+        <span class="err"><svg class="ic"><use href="#i-close"/></svg><span data-fr="Indiquez le nombre en dégradé" data-en="Enter the gradient count">Indiquez le nombre en dégradé</span></span>
+      </div>
+      <div class="field">
+        <label for="message" data-fr="Votre projet <span class='req'>*</span>" data-en="Your project <span class='req'>*</span>">Votre projet <span class="req">*</span></label>
+        <textarea id="message" name="message" required data-fr-ph="Décrivez chaque grade : nom, couleurs, style (Simple ou Complexe), thème du serveur…" data-en-ph="Describe each rank: name, colors, style (Simple or Complex), server theme…" placeholder="Décrivez chaque grade : nom, couleurs, style (Simple ou Complexe), thème du serveur…"></textarea>
+        <p class="hint" data-fr="Ex. 10 grades → donnez le nom et les couleurs de chacun." data-en="e.g. 10 ranks → give the name and colors of each.">Ex. 10 grades → donnez le nom et les couleurs de chacun.</p>
+        <span class="err"><svg class="ic"><use href="#i-close"/></svg><span data-fr="Décrivez votre projet en quelques mots" data-en="Describe your project in a few words">Décrivez votre projet en quelques mots</span></span>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-gold btn-lg magnetic" id="submitBtn"><span data-fr="Envoyer ma demande" data-en="Send my request">Envoyer ma demande</span><svg class="ic"><use href="#i-send"/></svg></button>
+        <span class="form-note" data-fr="Sans engagement — vous recevez un aperçu avant tout paiement." data-en="No commitment — you get a preview before any payment.">Sans engagement — vous recevez un aperçu avant tout paiement.</span>
+      </div>
+      <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <a href="#" class="foot-brand"><img src="pogzy.png" alt="Avatar Pogzy"><span class="nm">Pogzy</span></a>
+      <div class="foot-right">
+        <nav class="foot-links" aria-label="Navigation bas de page">
+          <a href="#about" data-fr="À propos" data-en="About">À propos</a>
+          <a href="#styles" data-fr="Styles" data-en="Styles">Styles</a>
+          <a href="#work" data-fr="Réalisations" data-en="Work">Réalisations</a>
+          <a href="#pricing" data-fr="Tarifs" data-en="Pricing">Tarifs</a>
+          <a href="#contact" data-fr="Contact" data-en="Contact">Contact</a>
+        </nav>
+        <button type="button" class="btn btn-discord js-discord"><svg class="ic fill"><use href="#i-discord"/></svg><span data-fr="Discord" data-en="Discord">Discord</span></button>
+      </div>
+    </div>
+    <div class="foot-copy">
+      <span data-fr="© <span id='year'></span> Pogzy — Grades Minecraft personnalisés." data-en="© <span id='year'></span> Pogzy — Custom Minecraft ranks.">© <span id="year"></span> Pogzy — Grades Minecraft personnalisés.</span>
+      <span class="pixel" data-fr="Fait main · pixel par pixel" data-en="Handmade · pixel by pixel">Fait main · pixel par pixel</span>
+    </div>
+  </div>
+</footer>
+
+<button class="top" id="toTop" aria-label="Remonter en haut"><svg class="ic"><use href="#i-up"/></svg></button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var finePointer = window.matchMedia('(pointer:fine)').matches;
+
+  /* ---------- Config ---------- */
+  var CONTACT_EMAIL = "paco.cleret14@gmail.com";   // ← ton email (reçoit les demandes du formulaire)
+  var WEB3FORMS_KEY = "";                            // ← (optionnel) clé Web3Forms
+  var DISCORD_USER  = "pogzy_";                      // ← ton pseudo Discord
+
+  var hEl=document.getElementById('discordHandle'); if(hEl) hEl.textContent=DISCORD_USER;
+
+  /* ---------- Toast ---------- */
+  var toast=document.getElementById('toast'), toastT;
+  function showToast(html){
+    toast.innerHTML=html; toast.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(function(){toast.classList.remove('show');},2600);
+  }
+  function copyText(txt){
+    if(navigator.clipboard && window.isSecureContext){ return navigator.clipboard.writeText(txt); }
+    var ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); return Promise.resolve();
+  }
+  document.querySelectorAll('.js-discord').forEach(function(el){
+    el.addEventListener('click', function(e){
+      e.preventDefault();
+      copyText(DISCORD_USER).then(function(){
+        showToast('<svg class="ic"><use href="#i-discord"/></svg><span>'+(lang==='en'?'Discord username copied: ':'Pseudo Discord copié : ')+DISCORD_USER+'</span>');
+      });
+    });
+  });
+
+  /* ---------- i18n ---------- */
+  var lang = localStorage.getItem('pogzy-lang') || 'fr';
+  function applyLang(l){
+    lang=l; document.documentElement.lang=l;
+    document.querySelectorAll('[data-fr]').forEach(function(el){ var v=el.getAttribute('data-'+l); if(v!==null) el.innerHTML=v; });
+    document.querySelectorAll('[data-fr-ph]').forEach(function(el){ var v=el.getAttribute('data-'+l+'-ph'); if(v!==null) el.setAttribute('placeholder',v); });
+    document.querySelectorAll('.lang button').forEach(function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-lang')===l?'true':'false'); });
+    localStorage.setItem('pogzy-lang',l); setYear(); renderEstimator();
+  }
+  document.querySelectorAll('.lang button').forEach(function(b){ b.addEventListener('click',function(){applyLang(b.getAttribute('data-lang'));}); });
+  function setYear(){ document.querySelectorAll('#year').forEach(function(e){e.textContent=new Date().getFullYear();}); }
+
+  /* ---------- Header / progress / back-to-top / bg fade ---------- */
+  var nav=document.getElementById('nav'), progress=document.getElementById('progress'), toTop=document.getElementById('toTop'), bgfx=document.getElementById('bgfx');
+  function onScroll(){
+    var y=window.scrollY||document.documentElement.scrollTop;
+    nav.classList.toggle('scrolled', y>20);
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    progress.style.width=(h>0?(y/h*100):0)+'%';
+    toTop.classList.toggle('show', y>600);
+    if(bgfx){ var vh=window.innerHeight; bgfx.style.opacity=String(Math.max(0.45, 1 - y/(vh*1.4))); }
+  }
+  window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+  toTop.addEventListener('click', function(){ window.scrollTo({top:0, behavior:reduced?'auto':'smooth'}); });
+
+  /* ---------- Mobile menu ---------- */
+  var burger=document.getElementById('burger'), burgerClose=document.getElementById('burgerClose'), menu=document.getElementById('mobileMenu'), scrim=document.getElementById('scrim');
+  function openMenu(o){ menu.classList.toggle('open',o); scrim.classList.toggle('open',o); menu.setAttribute('aria-hidden',o?'false':'true'); burger.setAttribute('aria-expanded',o?'true':'false'); document.body.style.overflow=o?'hidden':''; }
+  burger.addEventListener('click',function(){openMenu(true);});
+  burgerClose.addEventListener('click',function(){openMenu(false);});
+  scrim.addEventListener('click',function(){openMenu(false);});
+  menu.querySelectorAll('a').forEach(function(a){a.addEventListener('click',function(){openMenu(false);});});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')openMenu(false);});
+
+  /* ---------- Reveal + stagger ---------- */
+  var reveals=document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window && !reduced){
+    var io=new IntersectionObserver(function(en){ en.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in');
+      if(e.target.classList.contains('stagger')){ Array.prototype.forEach.call(e.target.children,function(c,i){c.style.transitionDelay=(i*70)+'ms';c.classList.add('reveal','in');}); }
+      io.unobserve(e.target); } }); },{threshold:0.14, rootMargin:'0px 0px -8% 0px'});
+    reveals.forEach(function(el){io.observe(el);});
+  } else reveals.forEach(function(el){el.classList.add('in');});
+
+  /* ---------- Stat count-up ---------- */
+  var counted=false;
+  function countUp(){ if(counted)return; counted=true;
+    document.querySelectorAll('[data-count]').forEach(function(el){
+      var target=parseInt(el.getAttribute('data-count'),10), suffix=el.getAttribute('data-suffix')||'';
+      if(reduced){el.textContent=target+suffix;return;}
+      var t0=null,dur=1100;
+      function tick(ts){if(!t0)t0=ts;var p=Math.min((ts-t0)/dur,1);el.textContent=Math.round(target*(1-Math.pow(1-p,3)))+suffix;if(p<1)requestAnimationFrame(tick);}
+      requestAnimationFrame(tick);
+    });
+  }
+  var statSection=document.querySelector('.stats');
+  if(statSection && 'IntersectionObserver' in window){ var io2=new IntersectionObserver(function(e){if(e[0].isIntersecting){countUp();io2.disconnect();}},{threshold:0.4}); io2.observe(statSection); } else countUp();
+
+  /* ---------- Hero chat ---------- */
+  var chat=document.getElementById('heroChat');
+  if(chat){
+    var msgs=Array.prototype.slice.call(chat.querySelectorAll('.msg')), typing=chat.querySelector('.chat-typing');
+    if(reduced){ msgs.forEach(function(m){m.classList.add('show');}); if(typing)typing.style.display='none'; }
+    else{
+      var timers=[]; function clearAll(){timers.forEach(clearTimeout);timers=[];}
+      function play(){ clearAll(); msgs.forEach(function(m){m.classList.remove('show');}); if(typing)typing.style.opacity='0';
+        msgs.forEach(function(m,i){timers.push(setTimeout(function(){m.classList.add('show');},450+i*720));});
+        var end=450+msgs.length*720; timers.push(setTimeout(function(){if(typing)typing.style.opacity='1';},end)); timers.push(setTimeout(play,end+3600));
+      }
+      if('IntersectionObserver' in window){ var io3=new IntersectionObserver(function(e){if(e[0].isIntersecting)play();else clearAll();},{threshold:0.25}); io3.observe(chat); } else play();
+    }
+  }
+
+  /* ---------- Tilt + magnetic ---------- */
+  if(finePointer && !reduced){
+    document.querySelectorAll('.tilt').forEach(function(el){
+      el.addEventListener('pointermove',function(e){ var r=el.getBoundingClientRect(),px=(e.clientX-r.left)/r.width-0.5,py=(e.clientY-r.top)/r.height-0.5;
+        el.style.transform='perspective(900px) rotateY('+(px*7)+'deg) rotateX('+(-py*7)+'deg) translateY(-6px)'; });
+      el.addEventListener('pointerleave',function(){el.style.transform='';});
+    });
+    document.querySelectorAll('.magnetic').forEach(function(el){
+      el.addEventListener('pointermove',function(e){ var r=el.getBoundingClientRect(); el.style.transform='translate('+((e.clientX-r.left-r.width/2)*0.18)+'px,'+((e.clientY-r.top-r.height/2)*0.28)+'px)'; });
+      el.addEventListener('pointerleave',function(){el.style.transform='';});
+    });
+  }
+
+  /* ---------- Estimator ---------- */
+  var RATE={simple:1.5, complexe:3, degrade:3.5};
+  var qty={simple:3, complexe:1, degrade:0};
+  var inSimple=document.getElementById('qSimple'), inComplexe=document.getElementById('qComplexe'), inDegrade=document.getElementById('qDegrade');
+  var elTotal=document.getElementById('estTotal'), elBreak=document.getElementById('estBreak');
+  function fmtEuro(n){ return n.toLocaleString(lang==='en'?'en-IE':'fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }
+  function clampQty(){ qty.simple=Math.max(0,qty.simple|0); qty.complexe=Math.max(0,qty.complexe|0); qty.degrade=Math.max(0,Math.min(qty.degrade|0, qty.simple+qty.complexe)); }
+  var euroAnim;
+  function animateEuro(el,to){
+    if(reduced){el.textContent=fmtEuro(to);el.setAttribute('data-v',to);return;}
+    var from=parseFloat(el.getAttribute('data-v')||'0')||0,t0=null,dur=450; cancelAnimationFrame(euroAnim); el.setAttribute('data-v',to);
+    function tick(ts){if(!t0)t0=ts;var p=Math.min((ts-t0)/dur,1);el.textContent=fmtEuro(from+(to-from)*(1-Math.pow(1-p,3)));if(p<1)euroAnim=requestAnimationFrame(tick);}
+    euroAnim=requestAnimationFrame(tick);
+  }
+  function renderEstimator(){
+    if(!inSimple)return; clampQty();
+    inSimple.value=qty.simple; inComplexe.value=qty.complexe; inDegrade.value=qty.degrade;
+    var total=qty.simple*RATE.simple+qty.complexe*RATE.complexe+qty.degrade*RATE.degrade, g=qty.simple+qty.complexe;
+    if(elTotal)animateEuro(elTotal,total);
+    if(elBreak)elBreak.textContent = lang==='en' ? (g+' rank'+(g>1?'s':'')+' · '+qty.degrade+' in gradient') : (g+' grade'+(g>1?'s':'')+' · dont '+qty.degrade+' en dégradé');
+  }
+  document.querySelectorAll('.stepper button').forEach(function(b){ b.addEventListener('click',function(){qty[b.getAttribute('data-step')]+=parseInt(b.getAttribute('data-dir'),10);renderEstimator();}); });
+  [['simple',inSimple],['complexe',inComplexe],['degrade',inDegrade]].forEach(function(p){ if(!p[1])return;
+    p[1].addEventListener('input',function(){var v=parseInt(p[1].value.replace(/\D/g,''),10);qty[p[0]]=isNaN(v)?0:v;});
+    p[1].addEventListener('blur',renderEstimator);
+  });
+  var estFill=document.getElementById('estFill');
+  if(estFill){ estFill.addEventListener('click',function(){
+    clampQty(); var g=qty.simple+qty.complexe;
+    var cnt=document.getElementById('count'); if(cnt)cnt.value=g||'';
+    var opt=document.getElementById('option');
+    if(qty.degrade>0){opt.value='degrade';toggleDegrade(true);document.getElementById('degradeQty').value=qty.degrade;} else {opt.value='non';toggleDegrade(false);}
+    var msg=document.getElementById('message');
+    var line=lang==='en' ? 'Estimate: '+qty.simple+' Simple, '+qty.complexe+' Complex, '+qty.degrade+' gradient — ~'+fmtEuro(qty.simple*1.5+qty.complexe*3+qty.degrade*3.5)+'\n\n'
+                         : 'Devis estimé : '+qty.simple+' Simple, '+qty.complexe+' Complexe, '+qty.degrade+' en dégradé — ~'+fmtEuro(qty.simple*1.5+qty.complexe*3+qty.degrade*3.5)+'\n\n';
+    if(msg && msg.value.indexOf('Devis')!==0 && msg.value.indexOf('Estimate')!==0){msg.value=line+msg.value;}
+    document.getElementById('contact').scrollIntoView({behavior:reduced?'auto':'smooth'});
+    setTimeout(function(){if(cnt)cnt.focus();},reduced?0:500);
+  }); }
+  renderEstimator();
+
+  /* ---------- Form ---------- */
+  var form=document.getElementById('orderForm'), statusEl=document.getElementById('formStatus'), submitBtn=document.getElementById('submitBtn'),
+      optionSel=document.getElementById('option'), degradeField=document.getElementById('degradeQtyField'), degradeQty=document.getElementById('degradeQty');
+  function fieldWrap(i){return i.closest('.field');}
+  function toggleDegrade(show){ degradeField.classList.toggle('show',show); if(!show)degradeField.classList.remove('invalid'); }
+  optionSel.addEventListener('change',function(){toggleDegrade(optionSel.value==='degrade');});
+  function validate(){ var ok=true,f=form;
+    [f.discord,f.count,f.message].forEach(function(x){fieldWrap(x).classList.remove('invalid');});
+    if(!f.discord.value.trim()){fieldWrap(f.discord).classList.add('invalid');ok=false;}
+    if(!/^\d+$/.test(f.count.value.trim())||parseInt(f.count.value,10)<1){fieldWrap(f.count).classList.add('invalid');ok=false;}
+    if(!f.message.value.trim()){fieldWrap(f.message).classList.add('invalid');ok=false;}
+    if(optionSel.value==='degrade'){ fieldWrap(degradeQty).classList.remove('invalid'); if(!/^\d+$/.test(degradeQty.value.trim())||parseInt(degradeQty.value,10)<1){fieldWrap(degradeQty).classList.add('invalid');ok=false;} }
+    return ok;
+  }
+  ['discord','count','message'].forEach(function(id){form[id].addEventListener('input',function(){fieldWrap(form[id]).classList.remove('invalid');});});
+  degradeQty.addEventListener('input',function(){fieldWrap(degradeQty).classList.remove('invalid');});
+  function statusMsg(kind,fr,en){ statusEl.className='form-status '+kind; statusEl.innerHTML='<svg class="ic"><use href="#'+(kind==='ok'?'i-check':'i-close')+'"/></svg><span>'+(lang==='en'?en:fr)+'</span>'; }
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    if(!validate()){ var bad=form.querySelector('.field.invalid input, .field.invalid textarea'); if(bad)bad.focus(); statusMsg('bad','Veuillez corriger les champs en rouge.','Please fix the highlighted fields.'); return; }
+    var data={ discord:form.discord.value.trim(), count:form.count.value.trim(),
+      option:optionSel.options[optionSel.selectedIndex].textContent,
+      degradeQty: optionSel.value==='degrade'?degradeQty.value.trim():'—', message:form.message.value.trim() };
+    if(WEB3FORMS_KEY){
+      submitBtn.disabled=true; statusMsg('ok','Envoi en cours…','Sending…');
+      fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},
+        body:JSON.stringify({access_key:WEB3FORMS_KEY,subject:'Nouvelle demande de grades — '+data.discord,'Pseudo Discord':data.discord,'Nombre de grades':data.count,'Option':data.option,'Grades en dégradé':data.degradeQty,message:data.message})})
+      .then(function(r){return r.json();}).then(function(res){ submitBtn.disabled=false;
+        if(res.success){form.reset();toggleDegrade(false);statusMsg('ok','Merci ! Votre demande est envoyée. Je vous recontacte sur Discord très vite.','Thanks! Your request was sent. I\'ll reach out on Discord soon.');}
+        else statusMsg('bad','Une erreur est survenue. Réessayez ou écrivez-moi à '+CONTACT_EMAIL+'.','Something went wrong. Try again or email '+CONTACT_EMAIL+'.');
+      }).catch(function(){submitBtn.disabled=false;statusMsg('bad','Connexion impossible. Écrivez-moi à '+CONTACT_EMAIL+'.','Connection failed. Email '+CONTACT_EMAIL+'.');});
+      return;
+    }
+    var subject=(lang==='en'?'Rank request — ':'Demande de grades — ')+data.discord;
+    var body=[(lang==='en'?'Discord username: ':'Pseudo Discord : ')+data.discord,(lang==='en'?'Number of ranks: ':'Nombre de grades : ')+data.count,
+      (lang==='en'?'Add-on: ':'Option : ')+data.option,(lang==='en'?'Ranks in gradient: ':'Grades en dégradé : ')+data.degradeQty,'',(lang==='en'?'Project:':'Projet :'),data.message].join('\n');
+    window.location.href='mailto:'+CONTACT_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+    statusMsg('ok','Votre messagerie s\'ouvre avec la demande pré-remplie — il ne reste qu\'à l\'envoyer !','Your email app is opening with the request pre-filled — just hit send!');
+  });
+
+  /* ---------- Fond : champ de particules interactif (Canvas 2D) ---------- */
+  function initBackground(){
+    var canvas=document.getElementById('bgfx'); if(!canvas)return;
+    var ctx=canvas.getContext('2d'); if(!ctx)return;
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    var W=0,H=0,parts=[],lastW=0,lastH=0;
+    var GOLD=[255,206,90], ICE=[143,184,255];
+    var mouse={x:0,y:0,tx:0,ty:0,active:false};
+    function size(){ return [window.innerWidth||document.documentElement.clientWidth, window.innerHeight||document.documentElement.clientHeight]; }
+    function build(){
+      var count=Math.max(28, Math.min(96, Math.round(W*H/16000)));
+      parts=[];
+      for(var i=0;i<count;i++){
+        var big=Math.random()<0.13;
+        parts.push({ x:Math.random()*W, y:Math.random()*H,
+          r: big?(24+Math.random()*46):(0.6+Math.random()*1.9), big:big,
+          col: Math.random()<0.62?GOLD:ICE,
+          a: big?(0.035+Math.random()*0.05):(0.16+Math.random()*0.5),
+          vx:(Math.random()-0.5)*0.12, vy:-(0.05+Math.random()*0.28),
+          tw:Math.random()*6.28, tws:0.6+Math.random()*1.4, depth: big?(0.5+Math.random()*0.6):(0.3+Math.random()*1.2) });
+      }
+    }
+    function resize(){ var s=size(); if(!s[0]||!s[1])return; W=s[0];H=s[1];lastW=W;lastH=H;
+      canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);build(); }
+    window.addEventListener('resize',resize); resize();
+    if(finePointer){
+      window.addEventListener('pointermove',function(e){mouse.tx=e.clientX;mouse.ty=e.clientY;mouse.active=true;},{passive:true});
+      window.addEventListener('pointerout',function(){mouse.active=false;});
+    }
+    var running=true;
+    document.addEventListener('visibilitychange',function(){running=!document.hidden;if(running)requestAnimationFrame(frame);});
+    function frame(){
+      if(!running)return;
+      var s=size(); if(s[0]&&s[1]&&(s[0]!==lastW||s[1]!==lastH))resize();
+      if(!W||!H){requestAnimationFrame(frame);return;}
+      mouse.x+=(mouse.tx-mouse.x)*0.06; mouse.y+=(mouse.ty-mouse.y)*0.06;
+      var ox=mouse.x-W/2, oy=mouse.y-H/2;
+      ctx.clearRect(0,0,W,H);
+      if(mouse.active && !reduced){
+        var sp=ctx.createRadialGradient(mouse.x,mouse.y,0,mouse.x,mouse.y,280);
+        sp.addColorStop(0,'rgba(255,206,90,0.055)'); sp.addColorStop(1,'rgba(255,206,90,0)');
+        ctx.fillStyle=sp; ctx.fillRect(0,0,W,H);
+      }
+      for(var i=0;i<parts.length;i++){
+        var p=parts[i];
+        if(!reduced){ p.x+=p.vx; p.y+=p.vy; p.tw+=0.02*p.tws;
+          if(p.y<-p.r){p.y=H+p.r;p.x=Math.random()*W;} if(p.x<-p.r)p.x=W+p.r; if(p.x>W+p.r)p.x=-p.r; }
+        var px=p.x-ox*0.02*p.depth, py=p.y-oy*0.02*p.depth;
+        var tw=reduced?1:(0.7+0.3*Math.sin(p.tw)), alpha=p.a*tw;
+        if(mouse.active && !p.big && !reduced){ var dx=px-mouse.x,dy=py-mouse.y,d2=dx*dx+dy*dy; if(d2<15000)alpha=Math.min(0.92,alpha+(1-d2/15000)*0.5); }
+        ctx.beginPath();
+        if(p.big){ var rg=ctx.createRadialGradient(px,py,0,px,py,p.r);
+          rg.addColorStop(0,'rgba('+p.col[0]+','+p.col[1]+','+p.col[2]+','+alpha+')'); rg.addColorStop(1,'rgba('+p.col[0]+','+p.col[1]+','+p.col[2]+',0)'); ctx.fillStyle=rg; }
+        else ctx.fillStyle='rgba('+p.col[0]+','+p.col[1]+','+p.col[2]+','+alpha+')';
+        ctx.arc(px,py,p.r,0,6.2832); ctx.fill();
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  if(document.readyState!=='loading') initBackground(); else window.addEventListener('DOMContentLoaded',initBackground);
+
+  /* ---------- Init ---------- */
+  applyLang(lang); setYear();
+})();
+</script>
+</body>
+</html>
