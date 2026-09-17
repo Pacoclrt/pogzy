@@ -8,38 +8,6 @@ créé pour le stand du **CYBERTOUR Rouen 2026** (vendredi 9 octobre 2026, Seine
 
 Site statique : HTML, CSS et JavaScript, sans framework, sans étape de compilation.
 
-## Mettre en ligne sur GitHub Pages (sans ligne de commande)
-
-1. Sur github.com, clique sur **New repository**. Donne-lui un nom (par exemple `cybertour-mot-de-passe`),
-   choisis **Public**, puis **Create repository**.
-2. Sur la page du dépôt vide, clique sur le lien **uploading an existing file**.
-3. Ouvre ce dossier dans le Finder, sélectionne **tout son contenu** (`Cmd + A`) et glisse-le dans la page.
-   Glisse le contenu, pas le dossier lui-même : `index.html` doit se trouver à la racine du dépôt.
-4. Attends que les 19 fichiers soient listés, puis clique sur **Commit changes**.
-5. Va dans **Settings → Pages**. Source : **Deploy from a branch**, branche **main**, dossier **/ (root)**, **Save**.
-6. Après une ou deux minutes, le site est en ligne à `https://<ton-compte>.github.io/<nom-du-depot>/`.
-
-Pour une mise à jour : **Add file → Upload files**, glisse les fichiers modifiés, **Commit changes**.
-
-## Tester sur son ordinateur
-
-```bash
-python3 -m http.server 8000
-```
-
-Puis ouvrir <http://localhost:8000>. Un double-clic sur `index.html` fonctionne aussi.
-
-## Contenu
-
-| Fichier | Rôle |
-|---|---|
-| `index.html` | La page |
-| `css/style.css` | La charte (couleurs CYBERTOUR, thèmes clair et sombre) |
-| `css/fonts.css`, `fonts/` | Polices hébergées dans le dépôt |
-| `js/app.js` | Le jeu : analyse du mot de passe, règles, scénario, défi, quiz, mode vitrine |
-| `js/qrcode.min.js` | Génération du QR code |
-| `assets/` | Logo, bande partenaires, favicon |
-
 ## Fonctionnalités
 
 - Analyse en direct : ce que la machine reconnaît (prénom, date, suite clavier…) et le temps de cassage
