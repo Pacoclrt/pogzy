@@ -6,8 +6,6 @@ créé pour le stand du **CYBERTOUR Rouen 2026** (vendredi 9 octobre 2026, Seine
 > Le site de ton club vient d'être piraté. Le pirate « Crochet » essaie mille milliards de combinaisons
 > par seconde. Crée un mot de passe qu'il ne cassera pas.
 
-Site statique : HTML, CSS et JavaScript, sans framework, sans étape de compilation.
-
 ## Fonctionnalités
 
 - Analyse en direct : ce que la machine reconnaît (prénom, date, suite clavier…) et le temps de cassage
@@ -17,19 +15,6 @@ Site statique : HTML, CSS et JavaScript, sans framework, sans étape de compilat
 - Mode vitrine : démonstration automatique après 30 secondes d'inactivité
 - QR code vers le jeu pour rejouer sur son téléphone
 - Panneau animateur : `Ctrl + Alt + A`
-
-## Réglages
-
-En haut de `js/app.js` :
-
-```js
-var QR_FALLBACK="https://www.cybermalveillance.gouv.fr"; // QR quand la page est ouverte hors ligne
-var RATE=1e12;                                          // essais par seconde de l'attaquant
-var ATTRACT_DELAY=45000;                                // inactivité avant la démonstration (ms)
-var ATTRACT_DELAY_WIN=90000;                            // idem quand l'écran de victoire est affiché
-var MSG_CHAR=24;                                        // vitesse d'écriture des messages (ms par lettre)
-var MSG_READ=2800;                                      // temps de lecture minimum d'un message (ms)
-```
 
 ## Vie privée
 
