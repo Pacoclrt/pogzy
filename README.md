@@ -1,34 +1,54 @@
-# L'épreuve du mot de passe
+# Teste ton mot de passe
 
-Atelier de sensibilisation aux mots de passe pour collégiens, lycéens et étudiants,
-créé pour le stand du **CYBERTOUR Rouen 2026** (vendredi 9 octobre 2026, Seine Innopolis, Le Petit-Quevilly).
+Petit site pour les collégiens du stand **CYBERTOUR Rouen 2026** : on écrit un mot de passe inventé,
+le site affiche son niveau (de NUL à INCASSABLE), le temps qu'il faudrait à un pirate pour le trouver,
+les 8 défis à réussir, et les numéros et sites utiles.
 
-> Le site de ton club vient d'être piraté. Le pirate « Crochet » essaie mille milliards de combinaisons
-> par seconde. Crée un mot de passe qu'il ne cassera pas.
+Pensé pour le téléphone. Aucun mot de passe n'est enregistré ni envoyé, et la page ne contacte aucun
+autre site : polices et images sont dans le dossier.
 
-## Fonctionnalités
+## Mettre en ligne sur GitHub Pages (sans ligne de commande)
 
-- Analyse en direct : ce que la machine reconnaît (prénom, date, suite clavier…) et le temps de cassage
-- Onze règles qui se débloquent une par une, tirées des recommandations ANSSI, CNIL et Cybermalveillance
-- Scénario : Nora (cellule cyber) guide, Crochet (le pirate) se moque des mots de passe faibles
-- Domino de la réutilisation, quiz de débriefing, défi 60 secondes
-- Mode vitrine : démonstration automatique après 30 secondes d'inactivité
-- QR code vers le jeu pour rejouer sur son téléphone
-- Panneau animateur : `Ctrl + Alt + A`
+1. Sur github.com : **New repository**, un nom (par exemple `mot-de-passe`), **Public**, **Create repository**.
+2. Clique sur le lien **uploading an existing file**.
+3. Ouvre ce dossier, sélectionne **tout son contenu** (`Cmd + A`) et glisse-le dans la page.
+   Glisse le contenu, pas le dossier : `index.html` doit être à la racine du dépôt.
+4. Attends que les fichiers soient listés, puis **Commit changes**.
+5. **Settings → Pages** : **Deploy from a branch**, branche **main**, dossier **/ (root)**, **Save**.
+6. Une à deux minutes plus tard : `https://<ton-compte>.github.io/<nom-du-depot>/`.
 
-## Vie privée
+## Tester sur son ordinateur
 
-Aucun mot de passe saisi ne quitte le navigateur. La page ne fait aucune requête vers un service tiers :
-polices et bibliothèques sont hébergées dans le dépôt. Le compteur du jour (parties jouées, comptes sauvés,
-meilleur score) est stocké uniquement dans le navigateur de l'appareil, jamais les mots de passe.
-Une partie va d'une remise à zéro à la suivante (bouton ×, « Rejouer », défi, fin de la démo) et compte
-au plus une fois comme compte sauvé.
-Les liens d'aide renvoient vers les sites officiels uniquement quand on clique dessus.
+```bash
+python3 -m http.server 8000
+```
+
+puis <http://localhost:8000>.
+
+## Fichiers
+
+| Fichier | Rôle |
+|---|---|
+| `index.html` | La page |
+| `css/style.css` | Le style |
+| `css/fonts.css`, `fonts/` | Polices Bungee, Lexend, JetBrains Mono (SIL Open Font License) |
+| `js/app.js` | L'analyse du mot de passe, les niveaux et les défis |
+| `assets/` | Logo, partenaires, icône |
+
+## Comment le niveau est calculé
+
+Le site estime combien d'essais il faut pour trouver le mot de passe (mots de passe connus, prénoms,
+mots du dictionnaire, dates, suites clavier, puis force brute), face à un pirate qui en teste
+1 000 milliards par seconde.
+
+| Niveau | Temps pour le trouver |
+|---|---|
+| NUL | moins d'une seconde |
+| FAIBLE | moins d'un jour |
+| MOYEN | moins de 100 ans |
+| FORT | plus de 100 ans |
+| INCASSABLE | plus de 100 ans **et** les 8 défis réussis |
 
 ## Crédits
 
-- Logo et bande partenaires : propriété des organisateurs du CYBERTOUR Rouen 2026 (Normandie Numérique,
-  Campus Normandie Cyber) et de leurs partenaires. Ne pas réutiliser hors de l'événement.
-- Polices : Libre Franklin, Public Sans, IBM Plex Mono, sous licence SIL Open Font License 1.1.
-- QR code : [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) de Kazuhiko Arase, licence MIT.
-- Crochet, Nora et la « cellule cyber » sont des personnages inventés.
+Logo et bande partenaires : propriété des organisateurs du CYBERTOUR Rouen 2026 et de leurs partenaires.

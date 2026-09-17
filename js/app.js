@@ -1,14 +1,6 @@
-/* L'épreuve du mot de passe — CYBERTOUR Rouen 2026 */
+/* Teste ton mot de passe — CYBERTOUR Rouen 2026 */
 (function(){
 "use strict";
-
-/* ============ réglages ============ */
-var QR_FALLBACK="https://www.cybermalveillance.gouv.fr"; /* QR hors ligne ; en ligne il pointe vers le jeu */
-var RATE=1e12;                                        /* ferme de cartes graphiques */
-var ATTRACT_DELAY=45000;                              /* ms d'inactivité avant la démo */
-var ATTRACT_DELAY_WIN=90000;                          /* plus long quand on lit la victoire, le domino ou le quiz */
-var MSG_CHAR=24;                                      /* ms par lettre des messages */
-var MSG_READ=2800;                                    /* temps de lecture minimum d'un message (ms) */
 
 /* ============ listes ============ */
 var TOP=("123456 password 123456789 12345678 azerty qwerty 111111 1234567890 motdepasse 1234567 abc123 "+
@@ -165,546 +157,173 @@ function humanTime(s){
   if(y<1.4e10) return NF.format(Math.round(y/1e9))+" milliards d'années";
   return "plus que l'âge de l'Univers";
 }
-function shortNum(g){
-  if(g<1000){ var n=Math.round(g); return n+" essai"+(n>1?"s":""); }
-  if(g<1e6) return Math.round(g/1000)+" k essais";
-  if(g<1e9) return Math.round(g/1e6)+" M essais";
-  return "10^"+Math.floor(Math.log(g)/Math.LN10)+" essais";
+
+/* ============ réglages ============ */
+var RATE=1e12;          /* essais par seconde : une ferme de cartes graphiques */
+
+/* ============ niveaux ============ */
+var LEVELS=[
+  {n:"À toi de jouer", c:"#3F6C78"},
+  {n:"NUL",            c:"#FF4D6D"},
+  {n:"FAIBLE",         c:"#FF9F43"},
+  {n:"MOYEN",          c:"#FFD23F"},
+  {n:"FORT",           c:"#26D0F2"},
+  {n:"INCASSABLE",     c:"#7CE05A"}
+];
+var FULL_LOG=Math.log(100*YEAR*2*RATE)/Math.LN10;   /* barre pleine = 100 ans */
+
+/* ============ les 8 défis ============ */
+function found(x,kinds){
+  for(var i=0;i<x.a.parts.length;i++) if(kinds.indexOf(x.a.parts[i].k)>=0) return x.a.parts[i].t;
+  return "";
 }
-var KIND={
-  top:  ["bad","top mondial"],
-  name: ["bad","prénom"],
-  word: ["bad","mot connu"],
-  date: ["bad","date"],
-  seq:  ["bad","suite"],
-  repeat:["bad","répétition"],
-  digits:["mid","chiffres"],
-  brute:["good","au hasard"]
-};
-
-var VERDICTS=[[0,"Nul","var(--ko)"],[4,"Faible","var(--ko)"],[7,"Moyen","var(--warn)"],
-              [10,"Correct","var(--warn)"],[14,"Solide","var(--ok)"],[19,"Costaud","var(--ok)"],
-              [25,"Béton","var(--ok)"]];
-function verdictOf(L){var v=VERDICTS[0];for(var i=0;i<VERDICTS.length;i++) if(L>=VERDICTS[i][0]) v=VERDICTS[i]; return v;}
-
-/* ============ règles ============ */
+function quote(t,suite){ return t ? "« "+t+" » "+suite : ""; }
 var RULES=[
- {t:"8 caractères minimum",s:"ANSSI",w:"En dessous, c'est cassé en quelques secondes.",f:function(x){return x.pw.length>=8}},
- {t:"Une majuscule et une minuscule",s:"CNIL",w:"Deux casses, c'est l'alphabet doublé.",f:function(x){return x.a.lower&&x.a.upper}},
- {t:"Au moins un chiffre",s:"CNIL",w:"Mais pas à la fin : tout le monde fait ça.",f:function(x){return x.a.digit}},
- {t:"Au moins un caractère spécial",s:"CNIL",w:"Ponctuation, symbole, espace : tout compte.",f:function(x){return x.a.symbol}},
- {t:"Pas dans le top des mots de passe",s:"Cybermalveillance",w:"Celui-là est testé en tout premier.",f:function(x){return !(x.a.top&&!x.a.phrase)}},
- {t:"12 caractères minimum",s:"ANSSI · CNIL",w:"C'est le seuil recommandé par l'État.",f:function(x){return x.pw.length>=12}},
- {t:"Pas de suite clavier ni de répétition",s:"ANSSI",w:"azerty, 1234, aaa : déjà dans les listes.",f:function(x){return !x.a.seq&&!x.a.repeat}},
- {t:"Pas d'année ni de date",s:"Cybermalveillance",w:"Ta date de naissance se trouve en ligne.",f:function(x){return !x.a.date}},
- {t:"Pas de mot connu — sauf dans une phrase de 4 mots",s:"ANSSI",w:"Un mot seul tombe, même en l33t. Quatre mots tiennent.",f:function(x){return x.a.words.length===0||x.a.phrase}},
- {t:"16 caractères minimum",s:"Bonne pratique",w:"Chaque caractère en plus multiplie le travail.",f:function(x){return x.pw.length>=16}},
- {t:"Tenir plus de 100 ans",s:"Objectif",w:"C'est le temps affiché plus haut. Vise le siècle.",f:function(x){return x.a.guesses/2/RATE>=100*YEAR}}
+  {t:"12 caractères minimum",
+   ok:function(x){ return x.pw.length>=12; },
+   hint:function(x){ var n=12-x.pw.length; return "Encore "+n+" caractère"+(n>1?"s":"")+"."; }},
+  {t:"Des majuscules et des minuscules",
+   ok:function(x){ return x.a.lower&&x.a.upper; },
+   hint:function(x){ return x.a.upper ? "Ajoute une minuscule." : "Ajoute une MAJUSCULE."; }},
+  {t:"Au moins un chiffre",
+   ok:function(x){ return x.a.digit; },
+   hint:function(){ return "Pas seulement à la fin : tout le monde fait ça."; }},
+  {t:"Au moins un symbole",
+   ok:function(x){ return x.a.symbol; },
+   hint:function(){ return "Par exemple ! ? # @ ou un espace."; }},
+  {t:"Pas un mot de passe connu",
+   ok:function(x){ return !(x.a.top&&!x.a.phrase); },
+   hint:function(x){ return quote(found(x,["top"]),"est testé en premier.")||"Il est testé en premier."; }},
+  {t:"Pas de prénom ni de mot seul",
+   ok:function(x){ return !(x.a.name||x.a.word)||x.a.phrase; },
+   hint:function(x){ return quote(found(x,["name","word"]),"est dans les listes.")+" Astuce : 4 mots au hasard."; }},
+  {t:"Pas de date ni d'année",
+   ok:function(x){ return !x.a.date; },
+   hint:function(x){ return quote(found(x,["date"]),"se devine en une seconde.")||"Ça se devine en une seconde."; }},
+  {t:"Pas de suite ni de répétition",
+   ok:function(x){ return !x.a.seq&&!x.a.repeat; },
+   hint:function(x){ return quote(found(x,["seq","repeat"]),"est bien trop facile.")||"C'est bien trop facile."; }}
 ];
+var TODO="À réussir";
 
-/* ============ DOM ============ */
-var $=function(i){return document.getElementById(i)};
-var pwEl=$("pw"),field=$("field"),rulesEl=$("rules"),lockedEl=$("locked"),progEl=$("progress"),
-    winEl=$("win"),countEl=$("count"),timeEl=$("time"),vwordEl=$("vword"),meter=$("meter"),
-    dotsEl=$("dots"),liveEl=$("live"),partsEl=$("parts"),blocksEl=$("blocks"),todayEl=$("today");
-var lastEtat="",liveT=null;
-
-var SEGS=26,segs=[];
-for(var i=0;i<SEGS;i++){var d=document.createElement("i");meter.appendChild(d);segs.push(d);}
-var dots=[];
-for(var i2=0;i2<RULES.length;i2++){var dd=document.createElement("i");dotsEl.appendChild(dd);dots.push(dd);}
-
-var NORA=[
- "Crochet commence par les mots de passe courts. Donne-moi au moins 8 caractères.",
- "Bien. Il teste maintenant tout en minuscules. Mélange les casses.",
- "Ajoute un chiffre. Pas à la fin : il connaît ce réflexe.",
- "Un symbole, maintenant. Ça va l'embrouiller.",
- "Attention : il charge la liste des mots de passe les plus utilisés.",
- "Il accélère. Monte à 12 caractères.",
- "Il essaie les suites de clavier : azerty, 1234…",
- "Il fouille tes réseaux sociaux. Aucune date de naissance.",
- "Il lance son dictionnaire. Un mot seul ne tiendra pas. Une phrase de quatre mots, oui.",
- "Presque. Rallonge encore : 16 caractères.",
- "Dernière défense. Il faut tenir un siècle."
-];
-var TAUNTS=["Trop facile.","Déjà cassé. Suivant.","Je l'avais dans ma liste.","Moins d'une seconde. Merci."];
+/* ============ interface ============ */
+var $=function(id){ return document.getElementById(id); };
+var pwEl=$("pw"),fieldEl=$("field"),countEl=$("count"),hudEl=$("hud"),lvlEl=$("lvl"),rankEl=$("rank"),
+    barEl=$("bar"),timeEl=$("timeline"),doneEl=$("done"),rulesEl=$("rules"),liveEl=$("live");
 var reduceMotion=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-/* Un message reste affiché le temps d'être lu. S'il en arrive d'autres entre-temps,
-   seul le plus récent attend son tour : pas de rafale, pas de message coupé. */
-var speaker="nora",cur={who:"",msg:""},pending=null,holdUntil=0,pumpT=null,typeTimer=null;
-var radioEl=$("radio"),radioWho=$("radio-who"),radioMsg=$("radio-msg");
-radioMsg.innerHTML='<span></span><span class="ghost"></span>';
-function say(who,msg,now){
-  if(cur.who===who&&cur.msg===msg){ pending=null; return; }
-  pending={who:who,msg:msg};
-  pump(now);
-}
-function pump(now){
-  clearTimeout(pumpT);
-  if(!pending) return;
-  var wait=holdUntil-Date.now();
-  if(wait>0&&!now){ pumpT=setTimeout(pump,wait); return; }
-  var m=pending; pending=null; show(m.who,m.msg);
-}
-function show(who,msg){
-  cur={who:who,msg:msg}; speaker=who;
-  radioEl.className="radio"+(who==="crochet"?" crochet":"");
-  radioWho.textContent= who==="crochet" ? "Crochet · le pirate" : "Nora · cellule cyber";
-  var shown=radioMsg.firstChild,rest=radioMsg.lastChild;
-  clearInterval(typeTimer);
-  var typing=reduceMotion?0:msg.length*MSG_CHAR;
-  holdUntil=Date.now()+typing+Math.max(MSG_READ,msg.length*45);
-  if(reduceMotion){ shown.textContent=msg; rest.textContent=""; return; }
-  var i=0; shown.textContent=""; rest.textContent=msg;
-  typeTimer=setInterval(function(){
-    i++; shown.textContent=msg.slice(0,i); rest.textContent=msg.slice(i);
-    if(i>=msg.length) clearInterval(typeTimer);
-  },MSG_CHAR);
-}
-function resetMessages(){ clearTimeout(pumpT); pending=null; holdUntil=0; cur={who:"",msg:""}; }
-var unlocked=1,nodes=[],bestLog=0;
-function buildRule(idx,delay){
-  var r=RULES[idx],li=document.createElement("li");
-  li.className="rule new";
-  if(delay) li.style.animationDelay=delay+"ms";
-  li.innerHTML='<span class="n" aria-hidden="true">'+String(idx+1).padStart(2,"0")+'</span>'+
-    '<span class="etat sr-only"></span>'+
-    '<span class="body"><span class="lbl"></span><span class="src"></span><span class="why"></span></span>'+
-    '<span class="mark" aria-hidden="true"></span>';
-  li.querySelector(".lbl").textContent=r.t;
-  li.querySelector(".src").textContent=r.s;
-  li.querySelector(".why").textContent=r.w;
-  rulesEl.appendChild(li); nodes.push(li);
-  setTimeout(function(){li.classList.remove("new")},340+(delay||0));
-}
-buildRule(0);
 
-var prevPassed=0,tauntT=null,spokenRule=-1,partsKey="",lockedLeft=-1,tauntedFor="";
+var SEGS=20,segs=[];
+for(var i=0;i<SEGS;i++){ segs.push(barEl.appendChild(document.createElement("i"))); }
+
+var cards=RULES.map(function(r,idx){
+  var li=document.createElement("li");
+  li.className="rule"; li.dataset.state="todo";
+  li.innerHTML='<span class="hex" aria-hidden="true"></span><span class="txt"><strong></strong><em></em><span class="sr-only"></span></span>';
+  li.querySelector(".hex").textContent=idx+1;
+  li.querySelector("strong").textContent=r.t;
+  li.querySelector("em").textContent=TODO;
+  rulesEl.appendChild(li);
+  return {li:li,hex:li.querySelector(".hex"),em:li.querySelector("em"),sr:li.querySelector(".sr-only"),state:"todo"};
+});
+
+var prevLvl=0,liveT=null;
 function render(){
-  var pw=pwEl.value,a=analyse(pw),st={pw:pw,a:a};
-  var res=RULES.map(function(r){ return pw?r.f(st):false; });   /* chaque règle évaluée une seule fois */
-  var sec=a.guesses/2/RATE;
-  var L=pw?Math.log(a.guesses)/Math.LN10:0;
-  var v=verdictOf(L);
+  var pw=pwEl.value, a=analyse(pw), x={pw:pw,a:a};
+  var sec=a.guesses/2/RATE, L=pw?Math.log(a.guesses)/Math.LN10:0;
 
-  field.classList.toggle("filled",pw.length>0);
+  fieldEl.classList.toggle("filled",pw.length>0);
   countEl.textContent=pw.length;
-  countEl.classList.toggle("good",pw.length>=16);
-  timeEl.textContent=pw?humanTime(sec):"—";
-  vwordEl.textContent=pw?v[1]:"À toi";
-  vwordEl.style.setProperty("--vc",pw?v[2]:"var(--ink-2)");
 
-  /* décomposition */
-  partsEl.classList.toggle("on",pw.length>0);
-  var key=a.parts.map(function(p){return p.k+":"+p.t;}).join("\u0001");
-  if(pw.length&&key!==partsKey){
-    partsKey=key;
-    blocksEl.innerHTML="";
-    a.parts.forEach(function(p){
-      var k=KIND[p.k]||KIND.brute,el=document.createElement("div");
-      el.className="blk "+k[0];
-      el.innerHTML='<u></u><em></em>';
-      el.firstChild.textContent=p.t;
-      el.lastChild.textContent=k[1]+" · "+shortNum(p.g);
-      blocksEl.appendChild(el);
-    });
-  }
-
-  var lit=pw?Math.max(1,Math.min(SEGS,Math.round(L))):0;
-  for(var i=0;i<SEGS;i++){
-    segs[i].classList.toggle("on",i<lit);
-    if(i<lit) segs[i].style.setProperty("--mc",v[2]);
-  }
-
-  /* débloque d'un coup toutes les règles déjà tenues (mot de passe collé ou généré) */
-  var added=0;
-  while(pw&&unlocked<RULES.length&&res.slice(0,unlocked).every(Boolean)){
-    unlocked++; buildRule(unlocked-1,added*70); added++;
-  }
-
+  /* défis */
   var passed=0;
-  for(var j=0;j<unlocked;j++){
-    var ok=res[j];
+  RULES.forEach(function(r,idx){
+    var c=cards[idx], ok=pw?r.ok(x):false, state=!pw?"todo":(ok?"ok":"ko");
     if(ok) passed++;
-    nodes[j].classList.toggle("ok",ok);
-    nodes[j].classList.toggle("ko",!ok);
-    nodes[j].querySelector(".mark").textContent=ok?"✓":"✕";
-    nodes[j].querySelector(".etat").textContent="Règle "+(j+1)+", "+(ok?"validée. ":"pas encore. ");
-  }
-  for(var q=0;q<RULES.length;q++) dots[q].className = q>=unlocked ? "" : (res[q]?"ok":"ko");
-
-  if(passed>prevPassed) beep(880,.07); else if(passed<prevPassed) beep(150,.13,"sawtooth");
-  prevPassed=passed;
-
-  var reste=RULES.length-unlocked;
-  if(reste!==lockedLeft){
-    lockedLeft=reste;
-    lockedEl.style.display = reste>0 ? "flex" : "none";
-    if(reste>0) lockedEl.lastChild.innerHTML="Encore <b>"+reste+"</b> règle"+(reste>1?"s":"")+" à débloquer.";
-  }
-
-  var full=passed===RULES.length;
-  progEl.textContent=passed+" / "+RULES.length;
-  /* qui parle ? une seule décision par rendu */
-  clearTimeout(tauntT);
-  if(full){
-    say("nora","Il abandonne. Ton compte tient. Mais écoute la suite…",true);
-  }else if(unlocked-1!==spokenRule){
-    spokenRule=unlocked-1;
-    say("nora",NORA[spokenRule]);                        /* nouvelle règle : Nora l'annonce */
-  }else if(pw&&sec<1){
-    if(pw!==tauntedFor&&!pending) tauntT=setTimeout(function(){   /* faible et plus de frappe : Crochet se moque */
-      tauntedFor=pwEl.value; say("crochet",TAUNTS[rnd(TAUNTS.length)]);
-    },1800);
-  }else if(speaker==="crochet"||(cur.who==="nora"&&cur.msg!==NORA[spokenRule])){
-    say("nora",NORA[spokenRule]);                        /* ça tient de nouveau : Nora reprend */
-  }
-  if(full&&!winEl.classList.contains("show")){ beep(660,.1); setTimeout(function(){beep(990,.18)},130); }
-  winEl.classList.toggle("show",full);
-
-
-  var etat = full ? "Les 11 règles sont validées."
-                  : passed+" règle"+(passed>1?"s":"")+" validée"+(passed>1?"s":"")+" sur "+unlocked+
-                    ". Cassé en "+(pw?humanTime(sec):"—")+".";
-  if(etat!==lastEtat){ lastEtat=etat; clearTimeout(liveT); liveT=setTimeout(function(){ liveEl.textContent=etat; },700); }
-
-  if(pw&&!attractOn&&partie.touched){ notePlay(pw); noteBest(L,sec); if(full) noteWin(); }
-  return {passed:passed,L:L,sec:sec};
-}
-
-function resetGame(){
-  pwEl.value="";
-  unlocked=1; nodes=[]; prevPassed=0; spokenRule=-1; partsKey=""; lockedLeft=-1; tauntedFor="";
-  rulesEl.innerHTML=""; buildRule(0);
-  winEl.classList.remove("show");
-  $("domino").classList.remove("on"); $("quiz").classList.remove("on");
-  $("domino-concl").classList.remove("on");
-  dominoRun++;
-  if(!chronoT) $("chrono").classList.remove("on");
-  newPartie(); resetMessages();
-  render();
-}
-
-/* ============ son ============ */
-var soundOn=false,actx=null;
-function beep(f,dur,type){
-  if(!soundOn) return;
-  try{
-    if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
-    if(actx.state==="suspended") actx.resume();
-    var o=actx.createOscillator(),g=actx.createGain();
-    o.type=type||"sine"; o.frequency.value=f;
-    g.gain.setValueAtTime(.05,actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+dur);
-    o.connect(g); g.connect(actx.destination);
-    o.start(); o.stop(actx.currentTime+dur);
-  }catch(e){}
-}
-function setSound(on){
-  soundOn=on;
-  $("sound").setAttribute("aria-pressed",on);
-  $("sound").textContent=on?"Son activé":"Son coupé";
-  $("a-sound").textContent=on?"Couper le son":"Activer le son";
-  if(on) beep(660,.08);
-}
-$("sound").onclick=function(){ setSound(!soundOn); };
-$("a-sound").onclick=function(){ setSound(!soundOn); };
-
-/* ============ compteur du jour (reste sur cet appareil) ============
-   Une « partie » va d'une remise à zéro à la suivante (×, Rejouer, défi, fin de démo).
-   Elle compte une fois comme partie jouée, et au plus une fois comme compte sauvé :
-   impossible d'avoir plus de comptes sauvés que de parties. */
-var STORE="cybertour-mdp-stats-v2";
-var partie={touched:false,counted:false,won:false};
-function newPartie(){ partie={touched:false,counted:false,won:false}; }
-function todayKey(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-function emptyStats(){ return {date:todayKey(),count:0,wins:0,bestLog:0,bestTime:"—"}; }
-function loadStats(){
-  var s=null;
-  try{ s=JSON.parse(localStorage.getItem(STORE)); }catch(e){}
-  if(!s||s.date!==todayKey()) return emptyStats();
-  s.wins=Math.min(s.wins||0,s.count||0);
-  return s;
-}
-var stats=loadStats(),saveT=null;
-function saveStats(){
-  clearTimeout(saveT);
-  saveT=setTimeout(function(){ try{ localStorage.setItem(STORE,JSON.stringify(stats)); }catch(e){} },300);
-}
-function plural(n,w){ return "<b>"+n+"</b> "+w+(n>1?"s":""); }
-function paintStats(){
-  todayEl.style.display="inline";
-  todayEl.innerHTML="Aujourd'hui · "+plural(stats.count,"partie")+" · "+plural(stats.wins,"compte")+" sauvé"+(stats.wins>1?"s":"");
-  $("a-stat").innerHTML="Parties jouées : <b>"+stats.count+"</b><br>Comptes sauvés : <b>"+stats.wins+"</b><br>Meilleur score : <b>"+stats.bestTime+"</b>";
-}
-function freshDay(){ if(stats.date!==todayKey()) stats=emptyStats(); }
-function notePlay(pw){
-  if(partie.counted||pw.length<6) return;
-  freshDay(); partie.counted=true; stats.count++; saveStats(); paintStats();
-}
-function noteWin(){
-  if(partie.won) return;
-  freshDay();
-  if(!partie.counted){ partie.counted=true; stats.count++; }
-  partie.won=true; stats.wins++; saveStats(); paintStats();
-}
-function noteBest(L,sec){
-  if(L<=stats.bestLog) return;
-  stats.bestLog=L; stats.bestTime=humanTime(sec); saveStats();
-  if($("anim").classList.contains("on")) paintStats();
-}
-$("a-zero").onclick=function(){ stats=emptyStats(); saveStats(); paintStats(); };
-paintStats();
-
-/* ============ QR code ============ */
-try{
-  var online=/^https?:$/.test(location.protocol)&&!/^(localhost|127\.|\[::1\])/.test(location.hostname);
-  var target=online ? location.origin+location.pathname : QR_FALLBACK;
-  if(online){
-    $("qr-h").textContent="Rejoue chez toi";
-    $("qr-p").textContent="Scanne pour retrouver le jeu sur ton téléphone, avec les conseils et les numéros utiles.";
-  }
-  if(window.qrcode){
-    var qr=qrcode(0,"M"); qr.addData(target); qr.make();
-    var cv=$("qrc"),ctx=cv.getContext("2d"),n=qr.getModuleCount(),quiet=2,cell=Math.max(3,Math.floor(150/(n+quiet*2)));
-    var dim=cell*(n+quiet*2);
-    cv.width=dim; cv.height=dim;
-    ctx.fillStyle="#FFFFFF"; ctx.fillRect(0,0,dim,dim);
-    ctx.fillStyle="#0D3A46";
-    for(var qy=0;qy<n;qy++) for(var qx=0;qx<n;qx++)
-      if(qr.isDark(qy,qx)) ctx.fillRect((qx+quiet)*cell,(qy+quiet)*cell,cell,cell);
-    $("qr").classList.add("on");
-  }
-}catch(e){}
-
-/* ============ défi 60 s ============ */
-var chronoT=null,chronoLeft=0;
-function startChrono(){
-  stopAttract(); resetGame();
-  chronoLeft=60; partie.touched=true;
-  $("chrono").classList.add("on");
-  $("chrono-txt").textContent="Crochet arrive. Tiens le plus de défenses possible.";
-  tickChrono();
-  chronoT=setInterval(tickChrono,1000);
-  pwEl.focus();
-}
-function tickChrono(){
-  $("chrono-n").textContent=chronoLeft;
-  $("chrono-bar").style.width=(chronoLeft/60*100)+"%";
-  if(chronoLeft<=0){
-    clearInterval(chronoT); chronoT=null;
-    var r=render();
-    $("chrono-n").textContent="0";
-    $("chrono-txt").textContent="Crochet est là. Tu tiens "+r.passed+" défense"+(r.passed>1?"s":"")+" sur 11.";
-    say(r.passed===11?"nora":"crochet", r.passed===11?"Il est reparti bredouille. Bien joué.":"Merci pour le mot de passe.",true);
-    beep(520,.12); setTimeout(function(){beep(392,.22)},140);
-    return;
-  }
-  if(chronoLeft<=5) beep(700,.05);
-  chronoLeft--;
-}
-function stopChrono(){
-  if(chronoT){ clearInterval(chronoT); chronoT=null; }
-  $("chrono").classList.remove("on");
-}
-$("challenge").onclick=startChrono;
-$("a-chrono").onclick=function(){ startChrono(); closeAnim(); };
-
-/* ============ domino de la réutilisation ============ */
-var COMPTES=["Réseau social","Messagerie","Jeu en ligne","Boîte mail","Espace scolaire","Boutique en ligne"];
-var dominoRun=0;
-$("go-domino").onclick=function(){
-  var run=++dominoRun;
-  var box=$("tiles"); box.innerHTML="";
-  $("domino").classList.add("on");
-  $("domino-concl").classList.remove("on");
-  COMPTES.forEach(function(nom,i){
-    var t=document.createElement("div");
-    t.className="tile"; t.innerHTML='<span></span><b></b>';
-    t.firstChild.textContent=nom;
-    t.lastChild.textContent="intact";
-    box.appendChild(t);
-    setTimeout(function(){
-      if(run!==dominoRun) return;
-      t.classList.add(i===0?"first":"down");
-      t.lastChild.textContent=i===0?"piraté":"tombé";
-      beep(i===0?200:300-i*20,.09,"sawtooth");
-      if(i===COMPTES.length-1) setTimeout(function(){ $("domino-concl").classList.add("on"); },350);
-    }, 450+i*380);
+    if(state!==c.state){
+      if(state==="ok"&&!reduceMotion){ c.li.classList.remove("pop"); void c.li.offsetWidth; c.li.classList.add("pop"); }
+      c.state=state; c.li.dataset.state=state;
+      c.hex.textContent= state==="ok" ? "✓" : idx+1;
+      c.sr.textContent= state==="ok" ? " Réussi." : state==="ko" ? " Pas encore." : "";
+    }
+    c.em.textContent= state==="ok" ? "Réussi !" : state==="ko" ? r.hint(x) : TODO;
   });
-  $("domino").scrollIntoView({behavior:"smooth",block:"nearest"});
-};
+  doneEl.textContent=passed+" / "+RULES.length;
+  doneEl.classList.toggle("zero",passed===0);
 
-/* ============ quiz éclair ============ */
-var QUIZ=[
- {q:"Ajouter un « ! » à la fin de mon mot de passe le rend beaucoup plus solide.",a:0,
-  e:"Faux. Le symbole ajouté au bout est le premier réflexe testé. C'est la longueur qui compte."},
- {q:"Si mon mot de passe est très solide, je peux l'utiliser sur tous mes comptes.",a:0,
-  e:"Faux. Un seul site piraté, et tous tes comptes tombent avec lui."},
- {q:"Quatre mots au hasard sont plus solides que « P@ssw0rd! ».",a:1,
-  e:"Vrai. Bien plus longs, et absents des listes d'attaque."}
-];
-var qi=0,qscore=0;
-function showQ(){
-  $("qnum").textContent="Débriefing · question "+(qi+1)+" sur "+QUIZ.length;
-  $("qtext").textContent=QUIZ[qi].q;
-  $("qfb").className="qfb";
-  Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function(b){b.disabled=false;b.style.display="";});
-}
-$("go-quiz").onclick=function(){
-  qi=0; qscore=0; $("quiz").classList.add("on"); showQ();
-  $("quiz").scrollIntoView({behavior:"smooth",block:"nearest"});
-};
-Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function(b){
-  b.onclick=function(){
-    var good=+b.dataset.a===QUIZ[qi].a;
-    if(good) qscore++;
-    beep(good?880:180,.12,good?"sine":"sawtooth");
-    var fb=$("qfb");
-    fb.className="qfb on "+(good?"yes":"no");
-    fb.textContent=QUIZ[qi].e;
-    Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function(x){x.disabled=true});
-    var at=qi;
-    setTimeout(function(){
-      if(at!==qi||!$("quiz").classList.contains("on")) return;
-      qi++;
-      if(qi<QUIZ.length){ showQ(); }
-      else{
-        $("qnum").textContent="Débriefing terminé";
-        $("qtext").textContent=qscore+" bonne"+(qscore>1?"s":"")+" réponse"+(qscore>1?"s":"")+" sur "+QUIZ.length+".";
-        $("qfb").className="qfb on yes";
-        $("qfb").textContent="À retenir : un mot de passe par compte, la double authentification partout, et jamais le donner à personne.";
-        Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function(x){x.style.display="none"});
-      }
-    },2600);
-  };
-});
+  /* niveau */
+  var lvl= !pw ? 0 : sec<1 ? 1 : sec<86400 ? 2 : sec<100*YEAR ? 3 : passed===RULES.length ? 5 : 4;
+  var lv=LEVELS[lvl];
+  hudEl.dataset.lvl=lvl;
+  document.documentElement.style.setProperty("--lv",lv.c);
+  lvlEl.textContent="LV "+lvl;
+  rankEl.textContent=lv.n;
+  if(pw){ timeEl.innerHTML="Un pirate le trouve en <b></b>"; timeEl.lastChild.textContent=humanTime(sec); }
+  else timeEl.textContent="Écris un mot de passe pour lancer l'attaque.";
 
-/* ============ mode vitrine ============ */
-var attractOn=false,attractT=null,idleT=null,typeT=null;
-var DEMO=[{p:"Lucas2011",hold:6000},{p:"tortue-Orage-pixel-fromage!42",hold:8000}];
-function typeIn(text,done){
-  var i=0;
-  (function step(){
-    if(!attractOn) return;
-    pwEl.value=text.slice(0,++i); render();
-    if(i<text.length) typeT=setTimeout(step,70); else typeT=setTimeout(done,0);
-  })();
-}
-function eraseAll(done){
-  (function step(){
-    if(!attractOn) return;
-    var v=pwEl.value;
-    if(!v.length){ typeT=setTimeout(done,250); return; }
-    pwEl.value=v.slice(0,-1); render(); typeT=setTimeout(step,28);
-  })();
-}
-function attractLoop(n){
-  if(!attractOn) return;
-  var step=DEMO[n%DEMO.length];
-  resetGame();
-  typeIn(step.p,function(){
-    typeT=setTimeout(function(){ eraseAll(function(){ attractLoop(n+1); }); },step.hold);
-  });
-}
-function startAttract(){
-  if(attractOn) return;
-  if(chronoT){ resetIdle(); return; }                  /* jamais pendant un défi */
-  attractOn=true;
-  document.body.classList.add("attract-on");
-  $("attract").classList.add("on");
-  attractLoop(0);
-}
-function stopAttract(){
-  if(!attractOn) return;
-  attractOn=false;
-  clearTimeout(typeT);
-  document.body.classList.remove("attract-on");
-  $("attract").classList.remove("on");
-  resetGame();
-}
-function resetIdle(){
-  clearTimeout(idleT);
-  idleT=setTimeout(startAttract,winEl.classList.contains("show")?ATTRACT_DELAY_WIN:ATTRACT_DELAY);
-}
-["keydown","pointerdown","touchstart","wheel"].forEach(function(ev){
-  document.addEventListener(ev,function(){ stopAttract(); resetIdle(); },{passive:true});
-});
-var lastMove=0;                                        /* bouger la souris compte comme de l'activité */
-document.addEventListener("pointermove",function(){
-  var t=Date.now(); if(t-lastMove>1000){ lastMove=t; if(!attractOn) resetIdle(); }
-},{passive:true});
-$("a-attract").onclick=function(){ closeAnim(); resetIdle(); setTimeout(startAttract,60); };
+  var lit= lvl===5 ? SEGS : pw ? Math.max(1,Math.min(SEGS-1,Math.round(L/FULL_LOG*SEGS))) : 0;
+  for(var s=0;s<SEGS;s++) segs[s].classList.toggle("on",s<lit);
 
-/* ============ panneau animateur ============ */
-var CAS=[
- {p:"123456",n:"Le plus utilisé au monde. Cassé instantanément."},
- {p:"Marseille13!",n:"Ville + code postal + symbole : le faux sentiment de sécurité."},
- {p:"Lucas2011",n:"Prénom + année de naissance. Les deux se trouvent en ligne."},
- {p:"P@ssw0rd!",n:"Le l33t : les logiciels font la substitution tout seuls."},
- {p:"aaaaaaaaaaaa",n:"Douze caractères… mais une seule répétition."},
- {p:"tortue-Orage-pixel-fromage!42",n:"La phrase de passe. Toutes les règles d'un coup."}
-];
-var casBox=$("a-cases");
-CAS.forEach(function(c){
-  var b=document.createElement("button");
-  b.className="demo"; b.type="button";
-  b.innerHTML="<u></u><em></em>";
-  b.firstChild.textContent=c.p; b.lastChild.textContent=c.n;
-  b.onclick=function(){ stopAttract(); partie.touched=true; pwEl.value=c.p; render(); pwEl.focus(); };
-  casBox.appendChild(b);
-});
-function openAnim(){ $("anim").classList.add("on"); }
-function closeAnim(){ $("anim").classList.remove("on"); }
-$("anim-open").onclick=openAnim;
-$("anim-close").onclick=closeAnim;
-$("a-reset").onclick=function(){ stopAttract(); stopChrono(); resetGame(); closeAnim(); pwEl.focus(); };
-document.addEventListener("keydown",function(e){
-  if(e.ctrlKey&&e.altKey&&e.code==="KeyA"){             /* e.code : sur Mac, Option+A donne « å » */
-    e.preventDefault();
-    $("anim").classList.toggle("on");
-  }
-  if(e.key==="Escape") closeAnim();
-});
+  if(lvl>prevLvl&&pw&&!reduceMotion){ hudEl.classList.remove("up"); void hudEl.offsetWidth; hudEl.classList.add("up"); }
+  if(lvl===5&&prevLvl<5) confetti();
+  prevLvl=lvl;
 
-/* ============ contrôles ============ */
+  clearTimeout(liveT);
+  liveT=setTimeout(function(){
+    liveEl.textContent= pw ? "Niveau "+lv.n+". Trouvé en "+humanTime(sec)+". "+passed+" défis sur "+RULES.length+"." : "";
+  },800);
+}
+
+/* ============ idée de mot de passe : 4 mots au hasard ============ */
 function rnd(n){
-  if(window.crypto&&crypto.getRandomValues){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}
-  return (Math.random()*n)|0;
+  if(window.crypto&&crypto.getRandomValues){ var b=new Uint32Array(1); crypto.getRandomValues(b); return b[0]%n; }
+  return Math.floor(Math.random()*n);
 }
-GEN=GEN.filter(function(w){ return !TOPIDX.has(w); });
-function makePhrase(){
-  var pool=GEN.slice(),w=[];
+var WORDS=GEN.filter(function(w){ return !TOPIDX.has(w); });
+function makeIdea(){
+  var pool=WORDS.slice(),w=[];
   for(var i=0;i<4;i++) w.push(pool.splice(rnd(pool.length),1)[0]);
   var u=rnd(4); w[u]=w[u].charAt(0).toUpperCase()+w[u].slice(1);
   return w.join("-")+"!"+(rnd(90)+10);
 }
-function phraseOk(p){ var st={pw:p,a:analyse(p)}; return RULES.every(function(r){ return r.f(st); }); }
-$("gen").onclick=function(){
-  var p=makePhrase();
-  for(var n=0;n<30&&!phraseOk(p);n++) p=makePhrase();   /* garantie : la phrase proposée tient les 11 règles */
-  partie.touched=true; pwEl.value=p;
-  pwEl.focus(); render();
-};
-Array.prototype.forEach.call(document.querySelectorAll(".chip[data-pw]"),function(b){
-  b.onclick=function(){ partie.touched=true; pwEl.value=b.dataset.pw; pwEl.focus(); render(); };
-});
-$("clear").onclick=function(){ stopChrono(); resetGame(); pwEl.focus(); };
-$("replay").onclick=function(){ stopChrono(); resetGame(); window.scrollTo({top:$("pw").getBoundingClientRect().top+scrollY-120,behavior:"smooth"}); pwEl.focus({preventScroll:true}); };
-
-var root=document.documentElement;
-root.lang="fr";
-$("theme").onclick=function(){
-  if(root.getAttribute("data-theme")==="dark"){ root.setAttribute("data-theme","light"); this.textContent="Mode sombre"; }
-  else { root.setAttribute("data-theme","dark"); this.textContent="Mode clair"; }
-};
-if(window.matchMedia&&matchMedia("(prefers-color-scheme:dark)").matches) $("theme").textContent="Mode clair";
-
-pwEl.addEventListener("input",function(){ stopAttract(); resetIdle(); partie.touched=true; render(); });  /* saisie mobile, collage… */
-pwEl.value="Azerty2011";                               /* exemple au repos : ne compte pas comme une partie */
-render();
-resetIdle();
-if(window.matchMedia&&matchMedia("(pointer:fine)").matches){   /* pas de clavier qui surgit sur téléphone */
-  setTimeout(function(){ pwEl.focus(); pwEl.select(); },200);
+function ideaOk(p){
+  var x={pw:p,a:analyse(p)};
+  return x.a.guesses/2/RATE>=100*YEAR&&RULES.every(function(r){ return r.ok(x); });
 }
+$("idea").onclick=function(){
+  var p=makeIdea();
+  for(var n=0;n<40&&!ideaOk(p);n++) p=makeIdea();
+  pwEl.value=p; render();
+};
+
+/* ============ confettis (niveau INCASSABLE) ============ */
+var fx=$("fx"),ctx=fx.getContext("2d"),bits=[],fxRun=false;
+function confetti(){
+  if(reduceMotion) return;
+  var dpr=Math.min(window.devicePixelRatio||1,2);
+  fx.width=innerWidth*dpr; fx.height=innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  var cols=["#7CE05A","#26D0F2","#FFD23F","#FF9F43","#F2FBFD"];
+  var r=hudEl.getBoundingClientRect(),ox=r.left+r.width/2,oy=Math.max(40,r.top+20);
+  for(var i=0;i<90;i++){
+    var ang=-Math.PI/2+(Math.random()-.5)*2.4, sp=5+Math.random()*7;
+    bits.push({x:ox,y:oy,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,s:4+Math.random()*5,
+               c:cols[i%cols.length],r:Math.random()*6,vr:(Math.random()-.5)*.4,life:70+Math.random()*40});
+  }
+  if(!fxRun){ fxRun=true; requestAnimationFrame(tick); }
+}
+function tick(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  bits=bits.filter(function(b){ return b.life>0; });
+  bits.forEach(function(b){
+    b.vy+=.25; b.vx*=.99; b.x+=b.vx; b.y+=b.vy; b.r+=b.vr; b.life--;
+    ctx.save(); ctx.globalAlpha=Math.min(1,b.life/25); ctx.translate(b.x,b.y); ctx.rotate(b.r);
+    ctx.fillStyle=b.c; ctx.fillRect(-b.s/2,-b.s/2,b.s,b.s*.6); ctx.restore();
+  });
+  if(bits.length) requestAnimationFrame(tick); else { fxRun=false; ctx.clearRect(0,0,innerWidth,innerHeight); }
+}
+
+/* ============ contrôles ============ */
+pwEl.addEventListener("input",render);
+pwEl.addEventListener("keydown",function(e){ if(e.key==="Enter") pwEl.blur(); });   /* ferme le clavier */
+$("clear").onclick=function(){ pwEl.value=""; render(); pwEl.focus(); };
+render();
 })();

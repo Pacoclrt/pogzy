@@ -2,232 +2,98 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>L'épreuve du mot de passe · CYBERTOUR Rouen 2026</title>
-<meta name="description" content="Un pirate a volé ton mot de passe. Crée-en un qu'il ne cassera pas. Atelier de sensibilisation du CYBERTOUR Rouen 2026.">
-<meta name="theme-color" content="#0D3A46">
-<meta property="og:title" content="L'épreuve du mot de passe">
-<meta property="og:description" content="Un pirate a volé ton mot de passe. Crée-en un qu'il ne cassera pas.">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Teste ton mot de passe · CYBERTOUR Rouen 2026</title>
+<meta name="description" content="Ton mot de passe est-il incassable ? Teste-le et relève les 8 défis. Atelier du CYBERTOUR Rouen 2026.">
+<meta name="theme-color" content="#06222B">
+<meta property="og:title" content="Teste ton mot de passe">
+<meta property="og:description" content="Ton mot de passe est-il incassable ? Relève les 8 défis.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
-<script src="js/qrcode.min.js" defer></script>
 <script src="js/app.js" defer></script>
 </head>
 <body>
-<div class="attract" id="attract">Alerte : Crochet attaque — <em>touche l'écran pour protéger ton compte</em></div>
 
-<div class="rule-top"></div>
-<div class="band">
-  <div class="page">
-    <img class="logo" id="img-logo" src="assets/logo.png" width="480" height="132" alt="CYBERTOUR Rouen 2026">
-    <div class="meta">
-      <b>Vendredi 9 octobre 2026 · 10h – 16h</b>
-      Seine Innopolis, Le Petit-Quevilly
-    </div>
-    <div class="right">
-      <button class="iconbtn" id="sound" type="button" aria-pressed="false">Son coupé</button>
-      <button class="iconbtn" id="theme" type="button">Mode sombre</button>
-    </div>
-  </div>
-</div>
+<header class="top">
+  <img class="logo" src="assets/logo.png" width="480" height="132" alt="CYBERTOUR Rouen 2026">
+  <span class="tag">Atelier<br>mot de passe</span>
+</header>
 
-<main class="page">
-
-  <header class="intro">
-    <p class="kicker">Alerte · 21 h 47</p>
-    <h1>L'épreuve du mot de passe</h1>
-    <p class="chapo">Le site de ton club vient d'être piraté. <strong>4&#8239;000 mots de passe volés</strong>, dont le tien.
-    Le pirate signe « Crochet ». Sa machine essaie mille milliards de combinaisons par seconde.
-    Il te reste une chance : <strong>un nouveau mot de passe qu'il ne cassera pas.</strong></p>
-    <p class="notice" id="avertissement">
-      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"
-           stroke-linecap="round" aria-hidden="true" focusable="false" style="flex:none;margin-top:3px;color:var(--warn)">
-        <path d="M10 2.6 18.6 17.4H1.4Z"></path><path d="M10 8v4"></path><path d="M10 14.6h.01"></path>
-      </svg>
-      <span><b>N'écris pas un vrai mot de passe.</b> Invente-en un. Rien ne sort de ton navigateur.</span>
+<main>
+  <section class="play" aria-labelledby="titre">
+    <h1 id="titre">Teste ton <span>mot de passe</span></h1>
+    <p class="warn" id="warn">
+      <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="M10 2.6 18.6 17.4H1.4Z"/><path d="M10 8v4M10 14.6h.01"/></svg>
+      Invente-le. N'écris jamais ton vrai mot de passe.
     </p>
-  </header>
 
-  <div class="stage">
-    <div class="stage-head">
-      <span>Simulateur de cassage</span>
-      <span id="today"></span>
+    <div class="field" id="field">
+      <label class="sr-only" for="pw">Mot de passe à tester</label>
+      <input id="pw" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+             enterkeyhint="done" placeholder="Écris un mot de passe…" aria-describedby="warn">
+      <span class="count" id="count" aria-hidden="true">0</span>
+      <button class="clear" id="clear" type="button" aria-label="Effacer">×</button>
     </div>
 
-    <div class="chrono" id="chrono">
-      <b id="chrono-n">60</b>
-      <span id="chrono-txt">Crochet arrive. Tiens le plus de défenses possible.</span>
-      <span class="bar"><i id="chrono-bar"></i></span>
-    </div>
-
-    <div class="stage-body">
-      <div class="radio" id="radio">
-        <span class="who" id="radio-who">Nora · cellule cyber</span>
-        <p id="radio-msg"></p>
+    <div class="hud" id="hud" data-lvl="0">
+      <div class="hud-top">
+        <span class="lvl" id="lvl">LV 0</span>
+        <span class="rank" id="rank">À toi de jouer</span>
       </div>
-      <label class="fieldlabel" for="pw">Ton nouveau mot de passe</label>
-      <div class="field" id="field">
-        <input id="pw" type="text" autocomplete="off" autocapitalize="off" autocorrect="off"
-               spellcheck="false" placeholder="tape ici…" aria-describedby="avertissement">
-        <div class="field-side">
-          <span class="count" id="count" aria-hidden="true">0</span>
-          <button id="clear" type="button" aria-label="Effacer et recommencer" title="Effacer et recommencer">×</button>
-        </div>
-      </div>
-
-      <div class="parts" id="parts">
-        <p>Ce que la machine y reconnaît</p>
-        <div class="blocks" id="blocks"></div>
-      </div>
-
-      <div class="meter" id="meter" aria-hidden="true"></div>
-
-      <div class="verdict">
-        <div class="vword" id="vword">À toi</div>
-        <div class="vtime"><span>Cassé en</span><b id="time">—</b></div>
-      </div>
-
-      <p class="attacker">Face à un attaquant qui essaie <b>1 000 milliards</b> de combinaisons par seconde.</p>
-
-      <div class="tries">
-        <span>Essaie</span>
-        <button class="chip" type="button" data-pw="123456">123456</button>
-        <button class="chip" type="button" data-pw="Azerty2011">Azerty2011</button>
-        <button class="chip" type="button" data-pw="P@ssw0rd!">P@ssw0rd!</button>
-        <button class="chip" type="button" data-pw="Rouen76!!">Rouen76!!</button>
-        <button class="chip go" type="button" id="gen">Phrase de passe</button>
-        <button class="chip alt" type="button" id="challenge">Défi 60 s</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="rules-head">
-    <h2>Tes défenses</h2>
-    <div class="score">
-      <div class="dots" id="dots" aria-hidden="true"></div>
-      <b id="progress">0 / 11</b>
-    </div>
-  </div>
-
-  <p class="sr-only" role="status" aria-atomic="true" id="live"></p>
-  <ol class="rules" id="rules"></ol>
-  <div class="locked" id="locked"><span class="n" aria-hidden="true">?</span><span></span></div>
-
-  <div class="win" id="win">
-    <h3 id="win-h">Crochet abandonne.</h3>
-    <p>Onze défenses sur onze. Ton compte tient. Mais Crochet ne s'arrête jamais à un seul site…</p>
-    <div class="acts">
-      <button class="chip alt" type="button" id="go-domino">Et s'il le vole ailleurs ?</button>
-      <button class="chip alt" type="button" id="go-quiz">Débriefing : 3 questions</button>
-      <button class="chip go" type="button" id="replay">Rejouer</button>
+      <div class="bar" id="bar" aria-hidden="true"></div>
+      <p class="time" id="timeline">Écris un mot de passe pour lancer l'attaque.</p>
     </div>
 
-    <div class="domino" id="domino">
-      <p>Crochet ne casse pas ton mot de passe. Alors il pirate un autre site, mal protégé, où tu as mis le même. Puis il l'essaie partout.</p>
-      <div class="tiles" id="tiles"></div>
-      <p class="concl" id="domino-concl">Six comptes perdus pour un seul site piraté. Règle numéro un : <strong>un mot de passe différent par compte</strong>.</p>
-    </div>
-
-    <div class="quiz" id="quiz">
-      <p class="qnum" id="qnum">Question 1 sur 3</p>
-      <p class="qtext" id="qtext"></p>
-      <div class="qacts">
-        <button class="chip alt" type="button" data-a="1">Vrai</button>
-        <button class="chip alt" type="button" data-a="0">Faux</button>
-      </div>
-      <div class="qfb" id="qfb"></div>
-    </div>
-  </div>
-
-  <section class="block">
-    <h2>Les trois réflexes</h2>
-    <div class="reflex">
-      <div><h3><i>01</i> Un par compte</h3><p>Un site se fait pirater. Si tu réutilises le même, tous tes autres comptes tombent avec.</p></div>
-      <div><h3><i>02</i> Double authentification</h3><p>Un code en plus du mot de passe. Même volé, il ne suffit plus. C'est la protection la plus rentable.</p></div>
-      <div><h3><i>03</i> Jamais le donner</h3><p>Aucun service ne te le demandera. Un message qui le réclame est une arnaque, même bien imitée.</p></div>
-    </div>
+    <button class="idea" id="idea" type="button">Donne-moi une idée</button>
+    <p class="sr-only" role="status" aria-atomic="true" id="live"></p>
   </section>
 
-  <section class="block">
-    <h2>Où trouver de l'aide</h2>
+  <section class="block" aria-labelledby="t-defis">
+    <div class="block-head">
+      <h2 id="t-defis">Les 8 défis</h2>
+      <span class="score" id="done">0 / 8</span>
+    </div>
+    <ol class="rules" id="rules"></ol>
+  </section>
+
+  <section class="block" aria-labelledby="t-aide">
+    <div class="block-head"><h2 id="t-aide">Besoin d'aide ?</h2></div>
     <div class="help">
-      <a class="row" href="https://17cyber.gouv.fr" target="_blank" rel="noopener noreferrer">
-        <span class="name"><u>17Cyber</u></span>
-        <span class="desc">Compte piraté, arnaque : diagnostic en ligne et mise en relation avec la police.</span>
-        <span class="tel">24 h/24</span>
+      <a class="card call" href="tel:3018">
+        <span class="big">3018</span>
+        <span class="txt"><strong>Harcèlement en ligne</strong><em>Gratuit, anonyme et confidentiel.</em></span>
+        <span class="go">Appeler</span>
       </a>
-      <a class="row" href="https://e-enfance.org/besoin-daide/" target="_blank" rel="noopener noreferrer">
-        <span class="name"><u>Le 3018</u></span>
-        <span class="desc">Harcèlement en ligne. Peut faire supprimer un contenu en urgence.</span>
-        <span class="tel">gratuit · anonyme</span>
+      <a class="card" href="https://17cyber.gouv.fr" target="_blank" rel="noopener noreferrer">
+        <span class="big">17Cyber</span>
+        <span class="txt"><strong>Compte piraté, arnaque</strong><em>Aide en ligne, 24&nbsp;h/24.</em></span>
+        <span class="go">Ouvrir</span>
       </a>
-      <a class="row" href="https://www.cybermalveillance.gouv.fr" target="_blank" rel="noopener noreferrer">
-        <span class="name"><u>Cybermalveillance.gouv.fr</u></span>
-        <span class="desc">Le dispositif national d'aide aux victimes. Partenaire de l'événement.</span>
-        <span class="tel"></span>
+      <a class="card" href="https://www.cybermalveillance.gouv.fr" target="_blank" rel="noopener noreferrer">
+        <span class="big small">Cybermalveillance</span>
+        <span class="txt"><strong>Conseils et aide</strong><em>Le site officiel pour les victimes.</em></span>
+        <span class="go">Ouvrir</span>
       </a>
-      <a class="row" href="https://www.internet-signalement.gouv.fr" target="_blank" rel="noopener noreferrer">
-        <span class="name"><u>PHAROS</u></span>
-        <span class="desc">Signaler un contenu illicite à l'État.</span><span class="tel"></span>
-      </a>
-      <a class="row" href="https://cyber.gouv.fr" target="_blank" rel="noopener noreferrer">
-        <span class="name"><u>ANSSI</u></span>
-        <span class="desc">Les recommandations officielles sur les mots de passe.</span><span class="tel"></span>
-      </a>
-      <a class="row" href="https://www.cnil.fr/fr/mots-de-passe-une-nouvelle-recommandation-pour-maitriser-sa-securite" target="_blank" rel="noopener noreferrer">
-        <span class="name"><u>CNIL</u></span>
-        <span class="desc">La recommandation sur la taille minimale d'un mot de passe.</span><span class="tel"></span>
+      <a class="card" href="https://www.internet-signalement.gouv.fr" target="_blank" rel="noopener noreferrer">
+        <span class="big">PHAROS</span>
+        <span class="txt"><strong>Signaler un contenu</strong><em>Menaces, haine, violence en ligne.</em></span>
+        <span class="go">Ouvrir</span>
       </a>
     </div>
   </section>
-
-  <div class="qr" id="qr">
-    <div class="plate"><canvas id="qrc" width="150" height="150" aria-hidden="true"></canvas></div>
-    <div class="txt">
-      <h3 id="qr-h">Continue chez toi</h3>
-      <p id="qr-p">Scanne pour retrouver les conseils officiels sur les mots de passe, et quoi faire si un compte est piraté.</p>
-    </div>
-  </div>
-
-  <div class="partners">
-    <img id="img-part" src="assets/partenaires.png" width="1400" height="186" alt="Événement porté par Normandie Numérique et Campus Normandie Cyber, avec le soutien de la Métropole Rouen Normandie, Rouen Normandie Création, l'Académie de Normandie, Rouen Ynov Campus et Cybermalveillance.gouv.fr — Cybermois, cybermois.gouv.fr">
-  </div>
-
-  <footer>
-    <p class="ref">Support pédagogique — atelier mots de passe</p>
-    <p>Les temps affichés supposent une attaque hors ligne sur une base volée. Ce sont des ordres de grandeur.</p>
-    <p>Aucun mot de passe n'est enregistré ni transmis. Le compteur du jour reste sur cet appareil.</p>
-    <p><button id="anim-open" type="button">panneau animateur</button></p>
-  </footer>
 </main>
 
-<div class="anim" id="anim" role="dialog" aria-label="Panneau animateur" aria-modal="false">
-  <button id="anim-close" type="button" aria-label="Fermer">×</button>
-  <h3>Panneau animateur</h3>
-  <p class="sub">Ctrl + Alt + A pour ouvrir ou fermer.</p>
-
-  <h4>Le pitch, à dire</h4>
-  <p class="pitch">« Hier soir, un pirate a volé les mots de passe d'un site. Le tien est dedans. Sa machine en teste mille milliards par seconde. Tu as deux minutes pour en créer un qu'il ne cassera pas. On y va ? »</p>
-
-  <h4>Partie</h4>
-  <div class="col">
-    <button class="act" type="button" id="a-reset">Nouvelle partie</button>
-    <button class="act" type="button" id="a-chrono">Lancer le défi 60 s</button>
-    <button class="act" type="button" id="a-attract">Lancer la démonstration</button>
-    <button class="act" type="button" id="a-sound">Activer le son</button>
+<footer>
+  <div class="partners">
+    <img src="assets/partenaires.png" width="1400" height="186"
+         alt="Événement porté par Normandie Numérique et Campus Normandie Cyber, avec le soutien de la Métropole Rouen Normandie, Rouen Normandie Création, l'Académie de Normandie, Rouen Ynov Campus et Cybermalveillance.gouv.fr — Cybermois">
   </div>
+  <p>Rien n'est enregistré ni envoyé : tout se passe sur ton téléphone.</p>
+</footer>
 
-  <h4>Cas d'école</h4>
-  <div class="col" id="a-cases"></div>
-
-  <h4>Aujourd'hui</h4>
-  <div class="stat" id="a-stat">Compteur indisponible.</div>
-  <div class="col" style="margin-top:6px">
-    <button class="act" type="button" id="a-zero">Remettre le compteur à zéro</button>
-  </div>
-</div>
+<canvas id="fx" aria-hidden="true"></canvas>
 </body>
 </html>
