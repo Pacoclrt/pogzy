@@ -11,7 +11,6 @@
 <meta property="og:type" content="website">
 <meta property="og:locale" content="fr_FR">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-<link rel="preload" href="fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
 <script src="js/qrcode.min.js" defer></script>
@@ -23,7 +22,7 @@
 <div class="rule-top"></div>
 <div class="band">
   <div class="page">
-    <img class="logo" id="img-logo" src="assets/logo.png" width="880" height="249" alt="CYBERTOUR Rouen 2026">
+    <img class="logo" id="img-logo" src="assets/logo.png" width="480" height="132" alt="CYBERTOUR Rouen 2026">
     <div class="meta">
       <b>Vendredi 9 octobre 2026 · 10h – 16h</b>
       Seine Innopolis, Le Petit-Quevilly
@@ -40,7 +39,7 @@
   <header class="intro">
     <p class="kicker">Alerte · 21 h 47</p>
     <h1>L'épreuve du mot de passe</h1>
-    <p class="chapo">Le site de ton club vient d'être piraté. <strong>4 000 mots de passe volés</strong>, dont le tien.
+    <p class="chapo">Le site de ton club vient d'être piraté. <strong>4&#8239;000 mots de passe volés</strong>, dont le tien.
     Le pirate signe « Crochet ». Sa machine essaie mille milliards de combinaisons par seconde.
     Il te reste une chance : <strong>un nouveau mot de passe qu'il ne cassera pas.</strong></p>
     <p class="notice" id="avertissement">
@@ -75,7 +74,7 @@
                spellcheck="false" placeholder="tape ici…" aria-describedby="avertissement">
         <div class="field-side">
           <span class="count" id="count" aria-hidden="true">0</span>
-          <button id="clear" type="button" aria-label="Effacer">×</button>
+          <button id="clear" type="button" aria-label="Effacer et recommencer" title="Effacer et recommencer">×</button>
         </div>
       </div>
 
@@ -123,6 +122,7 @@
     <div class="acts">
       <button class="chip alt" type="button" id="go-domino">Et s'il le vole ailleurs ?</button>
       <button class="chip alt" type="button" id="go-quiz">Débriefing : 3 questions</button>
+      <button class="chip go" type="button" id="replay">Rejouer</button>
     </div>
 
     <div class="domino" id="domino">
@@ -193,7 +193,7 @@
   </div>
 
   <div class="partners">
-    <img id="img-part" src="assets/partenaires.png" width="1400" height="186" loading="lazy" alt="Événement porté par Normandie Numérique et Campus Normandie Cyber, avec le soutien de la Métropole Rouen Normandie, Rouen Normandie Création, l'Académie de Normandie, Rouen Ynov Campus et Cybermalveillance.gouv.fr — Cybermois, cybermois.gouv.fr">
+    <img id="img-part" src="assets/partenaires.png" width="1400" height="186" alt="Événement porté par Normandie Numérique et Campus Normandie Cyber, avec le soutien de la Métropole Rouen Normandie, Rouen Normandie Création, l'Académie de Normandie, Rouen Ynov Campus et Cybermalveillance.gouv.fr — Cybermois, cybermois.gouv.fr">
   </div>
 
   <footer>

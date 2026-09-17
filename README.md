@@ -8,17 +8,18 @@ créé pour le stand du **CYBERTOUR Rouen 2026** (vendredi 9 octobre 2026, Seine
 
 Site statique : HTML, CSS et JavaScript, sans framework, sans étape de compilation.
 
-## Mettre en ligne sur GitHub Pages
+## Mettre en ligne sur GitHub Pages (sans ligne de commande)
 
-1. Crée un dépôt sur GitHub (public, ou privé avec un compte qui autorise Pages).
-2. Envoie ce dossier :
-   ```bash
-   git remote add origin https://github.com/<utilisateur>/<depot>.git
-   git push -u origin main
-   ```
-3. Sur GitHub : **Settings → Pages → Build and deployment**, source **Deploy from a branch**,
-   branche **main**, dossier **/ (root)**, puis **Save**.
-4. Le site est en ligne après une à deux minutes à l'adresse `https://<utilisateur>.github.io/<depot>/`.
+1. Sur github.com, clique sur **New repository**. Donne-lui un nom (par exemple `cybertour-mot-de-passe`),
+   choisis **Public**, puis **Create repository**.
+2. Sur la page du dépôt vide, clique sur le lien **uploading an existing file**.
+3. Ouvre ce dossier dans le Finder, sélectionne **tout son contenu** (`Cmd + A`) et glisse-le dans la page.
+   Glisse le contenu, pas le dossier lui-même : `index.html` doit se trouver à la racine du dépôt.
+4. Attends que les 19 fichiers soient listés, puis clique sur **Commit changes**.
+5. Va dans **Settings → Pages**. Source : **Deploy from a branch**, branche **main**, dossier **/ (root)**, **Save**.
+6. Après une ou deux minutes, le site est en ligne à `https://<ton-compte>.github.io/<nom-du-depot>/`.
+
+Pour une mise à jour : **Add file → Upload files**, glisse les fichiers modifiés, **Commit changes**.
 
 ## Tester sur son ordinateur
 
@@ -56,14 +57,19 @@ En haut de `js/app.js` :
 ```js
 var QR_FALLBACK="https://www.cybermalveillance.gouv.fr"; // QR quand la page est ouverte hors ligne
 var RATE=1e12;                                          // essais par seconde de l'attaquant
-var ATTRACT_DELAY=30000;                                // inactivité avant la démonstration (ms)
+var ATTRACT_DELAY=45000;                                // inactivité avant la démonstration (ms)
+var ATTRACT_DELAY_WIN=90000;                            // idem quand l'écran de victoire est affiché
+var MSG_CHAR=24;                                        // vitesse d'écriture des messages (ms par lettre)
+var MSG_READ=2800;                                      // temps de lecture minimum d'un message (ms)
 ```
 
 ## Vie privée
 
 Aucun mot de passe saisi ne quitte le navigateur. La page ne fait aucune requête vers un service tiers :
-polices et bibliothèques sont hébergées dans le dépôt. Le compteur du jour (nombre d'essais, comptes sauvés,
+polices et bibliothèques sont hébergées dans le dépôt. Le compteur du jour (parties jouées, comptes sauvés,
 meilleur score) est stocké uniquement dans le navigateur de l'appareil, jamais les mots de passe.
+Une partie va d'une remise à zéro à la suivante (bouton ×, « Rejouer », défi, fin de la démo) et compte
+au plus une fois comme compte sauvé.
 Les liens d'aide renvoient vers les sites officiels uniquement quand on clique dessus.
 
 ## Crédits

@@ -5,7 +5,10 @@
 /* ============ réglages ============ */
 var QR_FALLBACK="https://www.cybermalveillance.gouv.fr"; /* QR hors ligne ; en ligne il pointe vers le jeu */
 var RATE=1e12;                                        /* ferme de cartes graphiques */
-var ATTRACT_DELAY=30000;                              /* ms d'inactivité avant la démo */
+var ATTRACT_DELAY=45000;                              /* ms d'inactivité avant la démo */
+var ATTRACT_DELAY_WIN=90000;                          /* plus long quand on lit la victoire, le domino ou le quiz */
+var MSG_CHAR=24;                                      /* ms par lettre des messages */
+var MSG_READ=2800;                                    /* temps de lecture minimum d'un message (ms) */
 
 /* ============ listes ============ */
 var TOP=("123456 password 123456789 12345678 azerty qwerty 111111 1234567890 motdepasse 1234567 abc123 "+
@@ -46,15 +49,23 @@ var SEQS=["azertyuiop","qwertyuiop","qsdfghjklm","asdfghjkl","wxcvbn","zxcvbnm",
 
 /* ============ analyse ============ */
 function normalize(s){var o="";for(var i=0;i<s.length;i++){o+=LEET[s[i]]||s[i].toLowerCase();}return o;}
+/* index construit une fois : recherche en O(longueur) au lieu de parcourir 450 mots à chaque lettre */
+var DICT=new Map(),TOPIDX=new Map(),MAXW=0;
+function index(list,base,step,kind){
+  list.forEach(function(w,i){
+    if(w.length<3||DICT.has(w)) return;           /* doublon : le top mondial garde la priorité */
+    DICT.set(w,{g:base+i*step,kind:kind});
+    if(w.length>MAXW) MAXW=w.length;
+  });
+}
+TOP.forEach(function(w,i){ if(!TOPIDX.has(w)) TOPIDX.set(w,i); });
+index(TOP,1,1,"top"); index(NOMS,4000,60,"name"); index(MOTS,25000,320,"word");
 function findWord(n,p){
-  var best=null;
-  function scan(list,base,step){
-    for(var i=0;i<list.length;i++){var w=list[i];
-      if(w.length>=3&&n.substr(p,w.length)===w&&(!best||w.length>best.len))
-        best={len:w.length,guesses:base+i*step,word:w,list:list};}
+  for(var L=Math.min(MAXW,n.length-p);L>=3;L--){
+    var e=DICT.get(n.substr(p,L));
+    if(e) return {len:L,guesses:e.g,word:n.substr(p,L),kind:e.kind};
   }
-  scan(TOP,1,1); scan(NOMS,4000,60); scan(MOTS,25000,320);
-  return best;
+  return null;
 }
 function charsetOf(s){
   var n=0;
@@ -64,7 +75,7 @@ function charsetOf(s){
   return n||1;
 }
 function isSeq(c){
-  if(c.length<3)return false;
+  if(c.length<(/^[0-9]+$/.test(c)?3:4)) return false;
   var a=c.toLowerCase(),b=a.split("").reverse().join("");
   for(var i=0;i<SEQS.length;i++) if(SEQS[i].indexOf(a)>=0||SEQS[i].indexOf(b)>=0) return true;
   return false;
@@ -109,7 +120,7 @@ function analyse(pw){
       if(/^[A-Z][a-z]*$/.test(raw)||/^[A-Z]+$/.test(raw)) cf=2;
       else if(/[A-Z]/.test(raw)&&/[a-z]/.test(raw)) cf=Math.pow(2,Math.min(w.len,7));
       for(var k=0;k<raw.length;k++) if(LEET[raw[k]]){ lf=Math.min(lf*2,64); r.leet=true; }
-      var kind = w.list===TOP?"top" : w.list===NOMS?"name" : "word";
+      var kind=w.kind;
       if(kind==="top") r.top=true; else if(kind==="name") r.name=true; else r.word=true;
       r.words.push(w.word);
       var gw=Math.max(2,w.guesses*cf*lf);
@@ -120,6 +131,17 @@ function analyse(pw){
   flush();
   if(count>1) prod*=Math.min(Math.pow(6,count-1),1e6);
   r.guesses=Math.max(1,Math.min(prod,Math.pow(charsetOf(pw),pw.length)));
+
+  /* phrase de passe : au moins 4 blocs de lettres de 3 caractères ou plus */
+  r.phrase=pw.split(/[^A-Za-zÀ-ÖØ-öø-ÿ]+/).filter(function(c){return c.length>=3;}).length>=4;
+
+  /* le mot de passe entier est dans le top mondial (y compris 123456, 1q2w3e4r…) */
+  var lw=pw.toLowerCase();
+  if(TOPIDX.has(lw)){
+    r.top=true;
+    r.guesses=Math.min(r.guesses,(TOPIDX.get(lw)+1)*(pw===lw?1:2));
+    r.parts=[{t:pw,k:"top",g:r.guesses}];
+  }
   return r;
 }
 
@@ -144,7 +166,7 @@ function humanTime(s){
   return "plus que l'âge de l'Univers";
 }
 function shortNum(g){
-  if(g<1000) return Math.round(g)+" essais";
+  if(g<1000){ var n=Math.round(g); return n+" essai"+(n>1?"s":""); }
   if(g<1e6) return Math.round(g/1000)+" k essais";
   if(g<1e9) return Math.round(g/1e6)+" M essais";
   return "10^"+Math.floor(Math.log(g)/Math.LN10)+" essais";
@@ -171,11 +193,11 @@ var RULES=[
  {t:"Une majuscule et une minuscule",s:"CNIL",w:"Deux casses, c'est l'alphabet doublé.",f:function(x){return x.a.lower&&x.a.upper}},
  {t:"Au moins un chiffre",s:"CNIL",w:"Mais pas à la fin : tout le monde fait ça.",f:function(x){return x.a.digit}},
  {t:"Au moins un caractère spécial",s:"CNIL",w:"Ponctuation, symbole, espace : tout compte.",f:function(x){return x.a.symbol}},
- {t:"Pas dans le top des mots de passe",s:"Cybermalveillance",w:"Celui-là est testé en tout premier.",f:function(x){return !x.a.top}},
+ {t:"Pas dans le top des mots de passe",s:"Cybermalveillance",w:"Celui-là est testé en tout premier.",f:function(x){return !(x.a.top&&!x.a.phrase)}},
  {t:"12 caractères minimum",s:"ANSSI · CNIL",w:"C'est le seuil recommandé par l'État.",f:function(x){return x.pw.length>=12}},
  {t:"Pas de suite clavier ni de répétition",s:"ANSSI",w:"azerty, 1234, aaa : déjà dans les listes.",f:function(x){return !x.a.seq&&!x.a.repeat}},
  {t:"Pas d'année ni de date",s:"Cybermalveillance",w:"Ta date de naissance se trouve en ligne.",f:function(x){return !x.a.date}},
- {t:"Pas de mot connu — sauf quatre d'affilée",s:"ANSSI",w:"Un mot seul tombe, même en l33t. Quatre mots tiennent.",f:function(x){return x.a.words.length===0||x.a.words.length>=4}},
+ {t:"Pas de mot connu — sauf dans une phrase de 4 mots",s:"ANSSI",w:"Un mot seul tombe, même en l33t. Quatre mots tiennent.",f:function(x){return x.a.words.length===0||x.a.phrase}},
  {t:"16 caractères minimum",s:"Bonne pratique",w:"Chaque caractère en plus multiplie le travail.",f:function(x){return x.pw.length>=16}},
  {t:"Tenir plus de 100 ans",s:"Objectif",w:"C'est le temps affiché plus haut. Vise le siècle.",f:function(x){return x.a.guesses/2/RATE>=100*YEAR}}
 ];
@@ -201,32 +223,50 @@ var NORA=[
  "Il accélère. Monte à 12 caractères.",
  "Il essaie les suites de clavier : azerty, 1234…",
  "Il fouille tes réseaux sociaux. Aucune date de naissance.",
- "Il lance son dictionnaire. Un mot seul ne tiendra pas. Quatre, oui.",
+ "Il lance son dictionnaire. Un mot seul ne tiendra pas. Une phrase de quatre mots, oui.",
  "Presque. Rallonge encore : 16 caractères.",
  "Dernière défense. Il faut tenir un siècle."
 ];
 var TAUNTS=["Trop facile.","Déjà cassé. Suivant.","Je l'avais dans ma liste.","Moins d'une seconde. Merci."];
 var reduceMotion=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
-var sayT=null,lastSay="",speaker="nora";
-function say(who,msg){
-  if(who+msg===lastSay) return;
-  lastSay=who+msg; speaker=who;
-  $("radio").className="radio"+(who==="crochet"?" crochet":"");
-  $("radio-who").textContent= who==="crochet" ? "Crochet · le pirate" : "Nora · cellule cyber";
-  var el=$("radio-msg"); clearInterval(sayT);
-  el.innerHTML='<span></span><span class="ghost"></span>';
-  var shown=el.firstChild,rest=el.lastChild;
-  if(reduceMotion){ shown.textContent=msg; return; }
-  var i=0; rest.textContent=msg;
-  sayT=setInterval(function(){
-    i++; shown.textContent=msg.slice(0,i); rest.textContent=msg.slice(i);
-    if(i>=msg.length) clearInterval(sayT);
-  },16);
+/* Un message reste affiché le temps d'être lu. S'il en arrive d'autres entre-temps,
+   seul le plus récent attend son tour : pas de rafale, pas de message coupé. */
+var speaker="nora",cur={who:"",msg:""},pending=null,holdUntil=0,pumpT=null,typeTimer=null;
+var radioEl=$("radio"),radioWho=$("radio-who"),radioMsg=$("radio-msg");
+radioMsg.innerHTML='<span></span><span class="ghost"></span>';
+function say(who,msg,now){
+  if(cur.who===who&&cur.msg===msg){ pending=null; return; }
+  pending={who:who,msg:msg};
+  pump(now);
 }
+function pump(now){
+  clearTimeout(pumpT);
+  if(!pending) return;
+  var wait=holdUntil-Date.now();
+  if(wait>0&&!now){ pumpT=setTimeout(pump,wait); return; }
+  var m=pending; pending=null; show(m.who,m.msg);
+}
+function show(who,msg){
+  cur={who:who,msg:msg}; speaker=who;
+  radioEl.className="radio"+(who==="crochet"?" crochet":"");
+  radioWho.textContent= who==="crochet" ? "Crochet · le pirate" : "Nora · cellule cyber";
+  var shown=radioMsg.firstChild,rest=radioMsg.lastChild;
+  clearInterval(typeTimer);
+  var typing=reduceMotion?0:msg.length*MSG_CHAR;
+  holdUntil=Date.now()+typing+Math.max(MSG_READ,msg.length*45);
+  if(reduceMotion){ shown.textContent=msg; rest.textContent=""; return; }
+  var i=0; shown.textContent=""; rest.textContent=msg;
+  typeTimer=setInterval(function(){
+    i++; shown.textContent=msg.slice(0,i); rest.textContent=msg.slice(i);
+    if(i>=msg.length) clearInterval(typeTimer);
+  },MSG_CHAR);
+}
+function resetMessages(){ clearTimeout(pumpT); pending=null; holdUntil=0; cur={who:"",msg:""}; }
 var unlocked=1,nodes=[],bestLog=0;
-function buildRule(idx){
+function buildRule(idx,delay){
   var r=RULES[idx],li=document.createElement("li");
   li.className="rule new";
+  if(delay) li.style.animationDelay=delay+"ms";
   li.innerHTML='<span class="n" aria-hidden="true">'+String(idx+1).padStart(2,"0")+'</span>'+
     '<span class="etat sr-only"></span>'+
     '<span class="body"><span class="lbl"></span><span class="src"></span><span class="why"></span></span>'+
@@ -235,14 +275,14 @@ function buildRule(idx){
   li.querySelector(".src").textContent=r.s;
   li.querySelector(".why").textContent=r.w;
   rulesEl.appendChild(li); nodes.push(li);
-  setTimeout(function(){li.classList.remove("new")},320);
-  say("nora",NORA[idx]);
+  setTimeout(function(){li.classList.remove("new")},340+(delay||0));
 }
 buildRule(0);
 
-var prevPassed=0,tauntT=null;
+var prevPassed=0,tauntT=null,spokenRule=-1,partsKey="",lockedLeft=-1,tauntedFor="";
 function render(){
   var pw=pwEl.value,a=analyse(pw),st={pw:pw,a:a};
+  var res=RULES.map(function(r){ return pw?r.f(st):false; });   /* chaque règle évaluée une seule fois */
   var sec=a.guesses/2/RATE;
   var L=pw?Math.log(a.guesses)/Math.LN10:0;
   var v=verdictOf(L);
@@ -256,7 +296,9 @@ function render(){
 
   /* décomposition */
   partsEl.classList.toggle("on",pw.length>0);
-  if(pw.length){
+  var key=a.parts.map(function(p){return p.k+":"+p.t;}).join("\u0001");
+  if(pw.length&&key!==partsKey){
+    partsKey=key;
     blocksEl.innerHTML="";
     a.parts.forEach(function(p){
       var k=KIND[p.k]||KIND.brute,el=document.createElement("div");
@@ -274,53 +316,72 @@ function render(){
     if(i<lit) segs[i].style.setProperty("--mc",v[2]);
   }
 
-  var allOk=true;
-  for(var k=0;k<unlocked;k++){ if(!RULES[k].f(st)){ allOk=false; break; } }
-  if(allOk&&pw&&unlocked<RULES.length){ unlocked++; buildRule(unlocked-1); }
+  /* débloque d'un coup toutes les règles déjà tenues (mot de passe collé ou généré) */
+  var added=0;
+  while(pw&&unlocked<RULES.length&&res.slice(0,unlocked).every(Boolean)){
+    unlocked++; buildRule(unlocked-1,added*70); added++;
+  }
 
   var passed=0;
   for(var j=0;j<unlocked;j++){
-    var ok=pw?RULES[j].f(st):false;
+    var ok=res[j];
     if(ok) passed++;
     nodes[j].classList.toggle("ok",ok);
     nodes[j].classList.toggle("ko",!ok);
     nodes[j].querySelector(".mark").textContent=ok?"✓":"✕";
     nodes[j].querySelector(".etat").textContent="Règle "+(j+1)+", "+(ok?"validée. ":"pas encore. ");
   }
-  for(var q=0;q<RULES.length;q++) dots[q].className = q>=unlocked ? "" : (pw&&RULES[q].f(st)?"ok":"ko");
+  for(var q=0;q<RULES.length;q++) dots[q].className = q>=unlocked ? "" : (res[q]?"ok":"ko");
 
   if(passed>prevPassed) beep(880,.07); else if(passed<prevPassed) beep(150,.13,"sawtooth");
   prevPassed=passed;
 
   var reste=RULES.length-unlocked;
-  lockedEl.style.display = reste>0 ? "flex" : "none";
-  if(reste>0) lockedEl.lastChild.innerHTML="Encore <b>"+reste+"</b> règle"+(reste>1?"s":"")+" à débloquer.";
+  if(reste!==lockedLeft){
+    lockedLeft=reste;
+    lockedEl.style.display = reste>0 ? "flex" : "none";
+    if(reste>0) lockedEl.lastChild.innerHTML="Encore <b>"+reste+"</b> règle"+(reste>1?"s":"")+" à débloquer.";
+  }
 
   var full=passed===RULES.length;
   progEl.textContent=passed+" / "+RULES.length;
+  /* qui parle ? une seule décision par rendu */
   clearTimeout(tauntT);
-  if(full){ say("nora","Il abandonne. Ton compte tient. Mais écoute la suite…"); if(!attractOn) noteWin(pw); }
-  else if(pw&&sec<1){ tauntT=setTimeout(function(){ say("crochet",TAUNTS[rnd(TAUNTS.length)]); },1100); }
-  else if(speaker==="crochet"){ say("nora",NORA[unlocked-1]); }
+  if(full){
+    say("nora","Il abandonne. Ton compte tient. Mais écoute la suite…",true);
+  }else if(unlocked-1!==spokenRule){
+    spokenRule=unlocked-1;
+    say("nora",NORA[spokenRule]);                        /* nouvelle règle : Nora l'annonce */
+  }else if(pw&&sec<1){
+    if(pw!==tauntedFor&&!pending) tauntT=setTimeout(function(){   /* faible et plus de frappe : Crochet se moque */
+      tauntedFor=pwEl.value; say("crochet",TAUNTS[rnd(TAUNTS.length)]);
+    },1800);
+  }else if(speaker==="crochet"||(cur.who==="nora"&&cur.msg!==NORA[spokenRule])){
+    say("nora",NORA[spokenRule]);                        /* ça tient de nouveau : Nora reprend */
+  }
   if(full&&!winEl.classList.contains("show")){ beep(660,.1); setTimeout(function(){beep(990,.18)},130); }
   winEl.classList.toggle("show",full);
-  if(L>bestLog){ bestLog=L; }
+
 
   var etat = full ? "Les 11 règles sont validées."
                   : passed+" règle"+(passed>1?"s":"")+" validée"+(passed>1?"s":"")+" sur "+unlocked+
                     ". Cassé en "+(pw?humanTime(sec):"—")+".";
   if(etat!==lastEtat){ lastEtat=etat; clearTimeout(liveT); liveT=setTimeout(function(){ liveEl.textContent=etat; },700); }
 
-  if(!attractOn) noteTest(pw,L,sec);
+  if(pw&&!attractOn&&partie.touched){ notePlay(pw); noteBest(L,sec); if(full) noteWin(); }
   return {passed:passed,L:L,sec:sec};
 }
 
 function resetGame(){
   pwEl.value="";
-  unlocked=1; nodes=[]; prevPassed=0; rulesEl.innerHTML=""; buildRule(0);
+  unlocked=1; nodes=[]; prevPassed=0; spokenRule=-1; partsKey=""; lockedLeft=-1; tauntedFor="";
+  rulesEl.innerHTML=""; buildRule(0);
   winEl.classList.remove("show");
   $("domino").classList.remove("on"); $("quiz").classList.remove("on");
   $("domino-concl").classList.remove("on");
+  dominoRun++;
+  if(!chronoT) $("chrono").classList.remove("on");
+  newPartie(); resetMessages();
   render();
 }
 
@@ -349,40 +410,50 @@ function setSound(on){
 $("sound").onclick=function(){ setSound(!soundOn); };
 $("a-sound").onclick=function(){ setSound(!soundOn); };
 
-/* ============ compteur du jour (reste sur cet appareil) ============ */
-var STORE="cybertour-mdp-stats",seen={},wonSeen={},noteT=null;
+/* ============ compteur du jour (reste sur cet appareil) ============
+   Une « partie » va d'une remise à zéro à la suivante (×, Rejouer, défi, fin de démo).
+   Elle compte une fois comme partie jouée, et au plus une fois comme compte sauvé :
+   impossible d'avoir plus de comptes sauvés que de parties. */
+var STORE="cybertour-mdp-stats-v2";
+var partie={touched:false,counted:false,won:false};
+function newPartie(){ partie={touched:false,counted:false,won:false}; }
 function todayKey(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function emptyStats(){ return {date:todayKey(),count:0,wins:0,bestLog:0,bestTime:"—"}; }
 function loadStats(){
   var s=null;
   try{ s=JSON.parse(localStorage.getItem(STORE)); }catch(e){}
-  return (s&&s.date===todayKey()) ? s : emptyStats();
+  if(!s||s.date!==todayKey()) return emptyStats();
+  s.wins=Math.min(s.wins||0,s.count||0);
+  return s;
 }
-var stats=loadStats();
-function saveStats(){ try{ localStorage.setItem(STORE,JSON.stringify(stats)); }catch(e){} }
+var stats=loadStats(),saveT=null;
+function saveStats(){
+  clearTimeout(saveT);
+  saveT=setTimeout(function(){ try{ localStorage.setItem(STORE,JSON.stringify(stats)); }catch(e){} },300);
+}
+function plural(n,w){ return "<b>"+n+"</b> "+w+(n>1?"s":""); }
 function paintStats(){
   todayEl.style.display="inline";
-  todayEl.innerHTML="Aujourd'hui · <b>"+stats.count+"</b> essai"+(stats.count>1?"s":"")+" · <b>"+stats.wins+"</b> compte"+(stats.wins>1?"s":"")+" sauvé"+(stats.wins>1?"s":"");
-  $("a-stat").innerHTML="Essais comptés : <b>"+stats.count+"</b><br>Comptes sauvés : <b>"+stats.wins+"</b><br>Meilleur score : <b>"+stats.bestTime+"</b>";
+  todayEl.innerHTML="Aujourd'hui · "+plural(stats.count,"partie")+" · "+plural(stats.wins,"compte")+" sauvé"+(stats.wins>1?"s":"");
+  $("a-stat").innerHTML="Parties jouées : <b>"+stats.count+"</b><br>Comptes sauvés : <b>"+stats.wins+"</b><br>Meilleur score : <b>"+stats.bestTime+"</b>";
 }
-function freshDay(){ if(stats.date!==todayKey()){ stats=emptyStats(); seen={}; wonSeen={}; } }
-function noteWin(pw){
+function freshDay(){ if(stats.date!==todayKey()) stats=emptyStats(); }
+function notePlay(pw){
+  if(partie.counted||pw.length<6) return;
+  freshDay(); partie.counted=true; stats.count++; saveStats(); paintStats();
+}
+function noteWin(){
+  if(partie.won) return;
   freshDay();
-  if(wonSeen[pw]) return;
-  wonSeen[pw]=1; stats.wins++; saveStats(); paintStats();
+  if(!partie.counted){ partie.counted=true; stats.count++; }
+  partie.won=true; stats.wins++; saveStats(); paintStats();
 }
-function noteTest(pw,L,sec){
-  if(pw.length<6) return;
-  clearTimeout(noteT);
-  noteT=setTimeout(function(){
-    freshDay();
-    if(seen[pw]) return;
-    seen[pw]=1; stats.count++;
-    if(L>stats.bestLog){ stats.bestLog=L; stats.bestTime=humanTime(sec); }
-    saveStats(); paintStats();
-  },2500);
+function noteBest(L,sec){
+  if(L<=stats.bestLog) return;
+  stats.bestLog=L; stats.bestTime=humanTime(sec); saveStats();
+  if($("anim").classList.contains("on")) paintStats();
 }
-$("a-zero").onclick=function(){ stats=emptyStats(); seen={}; wonSeen={}; saveStats(); paintStats(); };
+$("a-zero").onclick=function(){ stats=emptyStats(); saveStats(); paintStats(); };
 paintStats();
 
 /* ============ QR code ============ */
@@ -410,7 +481,7 @@ try{
 var chronoT=null,chronoLeft=0;
 function startChrono(){
   stopAttract(); resetGame();
-  chronoLeft=60;
+  chronoLeft=60; partie.touched=true;
   $("chrono").classList.add("on");
   $("chrono-txt").textContent="Crochet arrive. Tiens le plus de défenses possible.";
   tickChrono();
@@ -425,7 +496,7 @@ function tickChrono(){
     var r=render();
     $("chrono-n").textContent="0";
     $("chrono-txt").textContent="Crochet est là. Tu tiens "+r.passed+" défense"+(r.passed>1?"s":"")+" sur 11.";
-    say(r.passed===11?"nora":"crochet", r.passed===11?"Il est reparti bredouille. Bien joué.":"Merci pour le mot de passe.");
+    say(r.passed===11?"nora":"crochet", r.passed===11?"Il est reparti bredouille. Bien joué.":"Merci pour le mot de passe.",true);
     beep(520,.12); setTimeout(function(){beep(392,.22)},140);
     return;
   }
@@ -441,7 +512,9 @@ $("a-chrono").onclick=function(){ startChrono(); closeAnim(); };
 
 /* ============ domino de la réutilisation ============ */
 var COMPTES=["Réseau social","Messagerie","Jeu en ligne","Boîte mail","Espace scolaire","Boutique en ligne"];
+var dominoRun=0;
 $("go-domino").onclick=function(){
+  var run=++dominoRun;
   var box=$("tiles"); box.innerHTML="";
   $("domino").classList.add("on");
   $("domino-concl").classList.remove("on");
@@ -452,6 +525,7 @@ $("go-domino").onclick=function(){
     t.lastChild.textContent="intact";
     box.appendChild(t);
     setTimeout(function(){
+      if(run!==dominoRun) return;
       t.classList.add(i===0?"first":"down");
       t.lastChild.textContent=i===0?"piraté":"tombé";
       beep(i===0?200:300-i*20,.09,"sawtooth");
@@ -475,7 +549,7 @@ function showQ(){
   $("qnum").textContent="Débriefing · question "+(qi+1)+" sur "+QUIZ.length;
   $("qtext").textContent=QUIZ[qi].q;
   $("qfb").className="qfb";
-  Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function(b){b.disabled=false});
+  Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function(b){b.disabled=false;b.style.display="";});
 }
 $("go-quiz").onclick=function(){
   qi=0; qscore=0; $("quiz").classList.add("on"); showQ();
@@ -490,7 +564,9 @@ Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function
     fb.className="qfb on "+(good?"yes":"no");
     fb.textContent=QUIZ[qi].e;
     Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function(x){x.disabled=true});
+    var at=qi;
     setTimeout(function(){
+      if(at!==qi||!$("quiz").classList.contains("on")) return;
       qi++;
       if(qi<QUIZ.length){ showQ(); }
       else{
@@ -506,7 +582,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".qacts button"),function
 
 /* ============ mode vitrine ============ */
 var attractOn=false,attractT=null,idleT=null,typeT=null;
-var DEMO=[{p:"Lucas2011",hold:2600},{p:"tortue-Orage-pixel-fromage!42",hold:3800}];
+var DEMO=[{p:"Lucas2011",hold:6000},{p:"tortue-Orage-pixel-fromage!42",hold:8000}];
 function typeIn(text,done){
   var i=0;
   (function step(){
@@ -533,6 +609,7 @@ function attractLoop(n){
 }
 function startAttract(){
   if(attractOn) return;
+  if(chronoT){ resetIdle(); return; }                  /* jamais pendant un défi */
   attractOn=true;
   document.body.classList.add("attract-on");
   $("attract").classList.add("on");
@@ -548,11 +625,15 @@ function stopAttract(){
 }
 function resetIdle(){
   clearTimeout(idleT);
-  idleT=setTimeout(startAttract,ATTRACT_DELAY);
+  idleT=setTimeout(startAttract,winEl.classList.contains("show")?ATTRACT_DELAY_WIN:ATTRACT_DELAY);
 }
 ["keydown","pointerdown","touchstart","wheel"].forEach(function(ev){
   document.addEventListener(ev,function(){ stopAttract(); resetIdle(); },{passive:true});
 });
+var lastMove=0;                                        /* bouger la souris compte comme de l'activité */
+document.addEventListener("pointermove",function(){
+  var t=Date.now(); if(t-lastMove>1000){ lastMove=t; if(!attractOn) resetIdle(); }
+},{passive:true});
 $("a-attract").onclick=function(){ closeAnim(); resetIdle(); setTimeout(startAttract,60); };
 
 /* ============ panneau animateur ============ */
@@ -570,7 +651,7 @@ CAS.forEach(function(c){
   b.className="demo"; b.type="button";
   b.innerHTML="<u></u><em></em>";
   b.firstChild.textContent=c.p; b.lastChild.textContent=c.n;
-  b.onclick=function(){ stopAttract(); pwEl.value=c.p; render(); pwEl.focus(); };
+  b.onclick=function(){ stopAttract(); partie.touched=true; pwEl.value=c.p; render(); pwEl.focus(); };
   casBox.appendChild(b);
 });
 function openAnim(){ $("anim").classList.add("on"); }
@@ -579,7 +660,7 @@ $("anim-open").onclick=openAnim;
 $("anim-close").onclick=closeAnim;
 $("a-reset").onclick=function(){ stopAttract(); stopChrono(); resetGame(); closeAnim(); pwEl.focus(); };
 document.addEventListener("keydown",function(e){
-  if(e.ctrlKey&&e.altKey&&(e.key==="a"||e.key==="A")){
+  if(e.ctrlKey&&e.altKey&&e.code==="KeyA"){             /* e.code : sur Mac, Option+A donne « å » */
     e.preventDefault();
     $("anim").classList.toggle("on");
   }
@@ -591,17 +672,25 @@ function rnd(n){
   if(window.crypto&&crypto.getRandomValues){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}
   return (Math.random()*n)|0;
 }
-$("gen").onclick=function(){
+GEN=GEN.filter(function(w){ return !TOPIDX.has(w); });
+function makePhrase(){
   var pool=GEN.slice(),w=[];
   for(var i=0;i<4;i++) w.push(pool.splice(rnd(pool.length),1)[0]);
   var u=rnd(4); w[u]=w[u].charAt(0).toUpperCase()+w[u].slice(1);
-  pwEl.value=w.join("-")+"!"+(rnd(90)+10);
+  return w.join("-")+"!"+(rnd(90)+10);
+}
+function phraseOk(p){ var st={pw:p,a:analyse(p)}; return RULES.every(function(r){ return r.f(st); }); }
+$("gen").onclick=function(){
+  var p=makePhrase();
+  for(var n=0;n<30&&!phraseOk(p);n++) p=makePhrase();   /* garantie : la phrase proposée tient les 11 règles */
+  partie.touched=true; pwEl.value=p;
   pwEl.focus(); render();
 };
 Array.prototype.forEach.call(document.querySelectorAll(".chip[data-pw]"),function(b){
-  b.onclick=function(){ pwEl.value=b.dataset.pw; pwEl.focus(); render(); };
+  b.onclick=function(){ partie.touched=true; pwEl.value=b.dataset.pw; pwEl.focus(); render(); };
 });
-$("clear").onclick=function(){ pwEl.value=""; pwEl.focus(); render(); };
+$("clear").onclick=function(){ stopChrono(); resetGame(); pwEl.focus(); };
+$("replay").onclick=function(){ stopChrono(); resetGame(); window.scrollTo({top:$("pw").getBoundingClientRect().top+scrollY-120,behavior:"smooth"}); pwEl.focus({preventScroll:true}); };
 
 var root=document.documentElement;
 root.lang="fr";
@@ -611,9 +700,11 @@ $("theme").onclick=function(){
 };
 if(window.matchMedia&&matchMedia("(prefers-color-scheme:dark)").matches) $("theme").textContent="Mode clair";
 
-pwEl.addEventListener("input",function(){ stopAttract(); render(); });
-pwEl.value="Azerty2011"; seen["Azerty2011"]=1;
+pwEl.addEventListener("input",function(){ stopAttract(); resetIdle(); partie.touched=true; render(); });  /* saisie mobile, collage… */
+pwEl.value="Azerty2011";                               /* exemple au repos : ne compte pas comme une partie */
 render();
 resetIdle();
-setTimeout(function(){pwEl.focus();pwEl.select()},200);
+if(window.matchMedia&&matchMedia("(pointer:fine)").matches){   /* pas de clavier qui surgit sur téléphone */
+  setTimeout(function(){ pwEl.focus(); pwEl.select(); },200);
+}
 })();
